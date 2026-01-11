@@ -1,4 +1,4 @@
-// App.tsx - VISUAL TOKEN BOARD
+// App.tsx - VISUAL TOKEN BOARD WITH SOUND
 import React, { useState } from 'react';
 import './App.css';
 
@@ -9,9 +9,20 @@ function App() {
   const addToken = () => {
     if (tokens < totalTokens) {
       setTokens(tokens + 1);
+      
+      // SIMPLE SOUND PLAYER
+      try {
+        const sound = new Audio('/sounds/coin.mp3');
+        sound.volume = 0.5; // 50% volume
+        sound.play();
+        console.log("🎵 Playing coin sound!");
+      } catch (error) {
+        console.log("Couldn't play sound:", error);
+      }
     }
   };
 
+  // KEEP THIS FUNCTION - it resets tokens to zero
   const resetTokens = () => {
     setTokens(0);
   };
@@ -62,6 +73,7 @@ function App() {
           {tokens >= totalTokens ? '✅ All Tokens Earned!' : '➕ Add Token'}
         </button>
 
+        {/* This button uses resetTokens function */}
         <button
           onClick={resetTokens}
           style={{
@@ -70,6 +82,25 @@ function App() {
           }}
         >
           🔄 Reset Board
+        </button>
+        
+        {/* TEMPORARY TEST BUTTON - Remove this after testing */}
+        <button
+          onClick={() => {
+            console.log("🔊 Testing sound directly...");
+            new Audio('/sounds/coin.mp3').play();
+          }}
+          style={{ 
+            backgroundColor: 'purple', 
+            color: 'white',
+            padding: '15px 30px',
+            fontSize: '1.2rem',
+            border: 'none',
+            borderRadius: '10px',
+            cursor: 'pointer'
+          }}
+        >
+          🔊 Test Sound
         </button>
       </div>
 
@@ -101,7 +132,7 @@ function App() {
   );
 }
 
-// CSS Styles (all in one file)
+// CSS Styles (all in one file) - KEEP ALL YOUR ORIGINAL STYLES
 const styles = {
   container: {
     minHeight: '100vh',
