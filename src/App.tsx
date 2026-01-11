@@ -21,7 +21,7 @@ function App() {
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>🏅 Digital Token Board</h1>
-        <p style={styles.subtitle}>For: <strong>Name: </strong> | Goal: {totalTokens} tokens</p>
+        <p style={styles.subtitle}>For: <strong>Joshua: </strong> | Goal: {totalTokens} tokens</p>
       </div>
 
       {/* Token Display - CIRCLES! */}
