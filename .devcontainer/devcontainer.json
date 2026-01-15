@@ -1,0 +1,38 @@
+{
+  "name": "Cognition ABA Tools",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install && npm start",
+  "portsAttributes": {
+    "3000": {
+      "label": "Cognition Token Board",
+      "onAutoForward": "openPreview"
+    }
+  }
+}
+EOFcat > .devcontainer/devcontainer.json << 'EOF'
+{
+  "name": "Cognition ABA Tools",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install && npm start",
+  "portsAttributes": {
+    "3000": {
+      "label": "Cognition Token Board",
+      "onAutoForward": "openPreview"
+    }
+  }
+}
+EOFcat > .devcontainer/devcontainer.json << 'EOF'
+{
+  "name": "Cognition ABA Tools",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install && npm start",
+  "portsAttributes": {
+    "3000": {
+      "label": "Cognition Token Board",
+      "onAutoForward": "openPreview"
+    }
+  }
+}
