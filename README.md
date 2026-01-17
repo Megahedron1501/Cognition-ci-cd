@@ -1,46 +1,92 @@
-# Getting Started with Create React App
+# Cognition - ABA Therapy Digital Tools Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A suite of digital tools for ABA therapy sessions, starting with a customizable token board system
 
-## Available Scripts
+[![GitHub Actions CI/CD](https://github.com/Megahedron1501/cognition-ci-cd/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Megahedron1501/cognition-ci-cd/actions)
+[![React](https://img.shields.io/badge/React-18.x-blue)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org)
 
-In the project directory, you can run:
+**Vercel or other deployment coming soon; for now, run locally using instructions below**
 
-### `npm start`
+## What is Cognition
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Cognition is a digital platform designed to support ABA (Applied Behavior Analysis) Therapy
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Current Features
 
-### `npm test`
+- Visual token tracking (5-token system)
+- Sound feedback when tokens are earned
+- Simple reset functionality
+- Tablet-friendly interface
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Quick Start - For Windows Users (Powershell)
 
-### `npm run build`
+1. **Download Node.js** from [nodejs.org](https://nodejs.org/)
+    - Click the "LTS" version (Recommended for most users)\
+    - Run the installer (Just click Next, Next, Next)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. **Verify installation** (Open PowerShell as Admin):
+    ```powershell
+    # Check Node.js version
+    node --version
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    # Check npm version
+    npm --version
+    ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+3. **Clone and Run the Project**
+```Powershell
+# Clone the repository
+git clone https://github.com/Megahedron1501/cognition-ci-cd.git
 
-### `npm run eject`
+#Navigate into the project
+cd cognition-ci-cd
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# Install dependencies
+npm install
+```
+The app should automatically open in your browser at `http://localhost:3000
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📁 Project Structure
+```
+cognition/
+├── public/
+│   └── sounds/          # Sound effects (coin.mp3)
+├── src/
+│   ├── App.tsx          # Main token board component
+│   ├── App.css          # Styles (currently using inline styles)
+│   └── react-app-env.d.ts  # TypeScript declarations
+└── package.json
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 🔮 Roadmap
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Planned Features
+- [ ] Customizable token counts (not just 5)
+- [ ] Save progress across sessions
+- [ ] Multiple student profiles
+- [ ] Different reward types and images
+- [ ] Data tracking and reports for BCBAs
+- [ ] Timer integration
+- [ ] Different visual themes
+- [ ] Sound on/off toggle
 
-## Learn More
+## 👥 For BCBAs and Therapists
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+This tool is designed to complement traditional ABA token systems. The digital format offers:
+- Consistent visual presentation
+- Immediate feedback
+- Easy reset between activities
+- Potential for data collection (coming soon)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🤝 Contributing
+
+This is a learning project! If you're interested in helping develop tools for autism therapy, feel free to:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## 💬 Contact
+
+- **GitHub**: [@Megahedron1501](https://github.com/Megahedron1501)
+- **Project Link**: https://github.com/Megahedron1501/cognition-ci-cd
