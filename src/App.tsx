@@ -1,10 +1,14 @@
 // App.tsx - VISUAL TOKEN BOARD WITH SOUND
 import React, { useState } from 'react';
 import './App.css';
+import ShapeSorterGame from './games/ShapeSorterGame'
 
 function App() {
   const [tokens, setTokens] = useState(0);
   const totalTokens = 5;
+  
+  // 🆕 ADD THIS LINE: Game view state
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame'>('tokenBoard');
 
   const addToken = () => {
     if (tokens < totalTokens) {
@@ -35,86 +39,117 @@ function App() {
         <p style={styles.subtitle}>For: <strong>Joshua: </strong> | Goal: {totalTokens} tokens</p>
       </div>
 
-      {/* Token Display - CIRCLES! */}
-      <div style={styles.tokenDisplay}>
-        {[1, 2, 3, 4, 5].map((num) => (
-          <div
-            key={num}
-            style={{
-              ...styles.token,
-              backgroundColor: num <= tokens ? '#FFD700' : '#FFFFFF',
-              borderColor: num <= tokens ? '#FFA500' : '#CCCCCC',
-              transform: num <= tokens ? 'scale(1.1)' : 'scale(1)',
-            }}
-          >
-            {num <= tokens ? '★' : num}
+      {/* 🆕 ADD THIS NAVIGATION SECTION */}
+      <div style={styles.navigation}>
+        <button 
+          onClick={() => setCurrentView('tokenBoard')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'tokenBoard' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          🏅 Token Board
+        </button>
+        <button 
+          onClick={() => setCurrentView('shapeGame')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'shapeGame' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          🎯 Shape Sorter Game
+        </button>
+      </div>
+
+      {/* 🆕 ADD THIS VIEW SWITCHER */}
+      {currentView === 'tokenBoard' ? (
+        // Your existing token board code
+        <>
+          {/* Token Display - CIRCLES! */}
+          <div style={styles.tokenDisplay}>
+            {[1, 2, 3, 4, 5].map((num) => (
+              <div
+                key={num}
+                style={{
+                  ...styles.token,
+                  backgroundColor: num <= tokens ? '#FFD700' : '#FFFFFF',
+                  borderColor: num <= tokens ? '#FFA500' : '#CCCCCC',
+                  transform: num <= tokens ? 'scale(1.1)' : 'scale(1)',
+                }}
+              >
+                {num <= tokens ? '★' : num}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Progress Text */}
-      <div style={styles.progressText}>
-        <h2>
-          Tokens: <span style={{ color: '#2E8B57' }}>{tokens}</span> / {totalTokens}
-        </h2>
-      </div>
+          {/* Progress Text */}
+          <div style={styles.progressText}>
+            <h2>
+              Tokens: <span style={{ color: '#2E8B57' }}>{tokens}</span> / {totalTokens}
+            </h2>
+          </div>
 
-      {/* Buttons */}
-      <div style={styles.buttons}>
-        <button
-          onClick={addToken}
-          disabled={tokens >= totalTokens}
-          style={{
-            ...styles.button,
-            backgroundColor: tokens >= totalTokens ? '#CCCCCC' : '#4CAF50',
-            cursor: tokens >= totalTokens ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {tokens >= totalTokens ? '✅ All Tokens Earned!' : '➕ Add Token'}
-        </button>
+          {/* Buttons */}
+          <div style={styles.buttons}>
+            <button
+              onClick={addToken}
+              disabled={tokens >= totalTokens}
+              style={{
+                ...styles.button,
+                backgroundColor: tokens >= totalTokens ? '#CCCCCC' : '#4CAF50',
+                cursor: tokens >= totalTokens ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {tokens >= totalTokens ? '✅ All Tokens Earned!' : '➕ Add Token'}
+            </button>
 
-        {/* This button uses resetTokens function */}
-        <button
-          onClick={resetTokens}
-          style={{
-            ...styles.button,
-            backgroundColor: '#F44336',
-          }}
-        >
-          🔄 Reset Board
-        </button>
-        
-        {/* TEMPORARY TEST BUTTON - Remove this after testing */}
-        <button
-          onClick={() => {
-            console.log("🔊 Testing sound directly...");
-            new Audio('/sounds/coin.mp3').play();
-          }}
-          style={{ 
-            backgroundColor: 'purple', 
-            color: 'white',
-            padding: '15px 30px',
-            fontSize: '1.2rem',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer'
-          }}
-        >
-          🔊 Test Sound
-        </button>
-      </div>
+            {/* This button uses resetTokens function */}
+            <button
+              onClick={resetTokens}
+              style={{
+                ...styles.button,
+                backgroundColor: '#F44336',
+              }}
+            >
+              🔄 Reset Board
+            </button>
+            
+            {/* TEMPORARY TEST BUTTON - Remove this after testing */}
+            <button
+              onClick={() => {
+                console.log("🔊 Testing sound directly...");
+                new Audio('/sounds/coin.mp3').play();
+              }}
+              style={{ 
+                backgroundColor: 'purple', 
+                color: 'white',
+                padding: '15px 30px',
+                fontSize: '1.2rem',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer'
+              }}
+            >
+              🔊 Test Sound
+            </button>
+          </div>
 
-      {/* Celebration Message */}
-      {tokens >= totalTokens && (
-        <div style={styles.celebration}>
-          <div style={styles.celebrationContent}>
-            <h2 style={{ margin: 0 }}>🎉 EXCELLENT WORK! 🎉</h2>
-            <p>You've earned all {totalTokens} tokens!</p>
-            <div style={styles.rewardBox}>
-              <strong>Reward: </strong> Choice of iPad, puzzles, or sensory bin
+          {/* Celebration Message */}
+          {tokens >= totalTokens && (
+            <div style={styles.celebration}>
+              <div style={styles.celebrationContent}>
+                <h2 style={{ margin: 0 }}>🎉 EXCELLENT WORK! 🎉</h2>
+                <p>You've earned all {totalTokens} tokens!</p>
+                <div style={styles.rewardBox}>
+                  <strong>Reward: </strong> Choice of iPad, puzzles, or sensory bin
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
+      ) : (
+        // 🆕 SHAPE SORTER GAME VIEW
+        <ShapeSorterGame />
       )}
 
       {/* Demo Notes (for BCBA) */}
@@ -153,6 +188,26 @@ const styles = {
     color: '#7F8C8D',
     fontSize: '1.2rem',
   },
+  // 🆕 ADD THESE NEW STYLES:
+  navigation: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '20px',
+    marginBottom: '30px',
+    flexWrap: 'wrap' as const,
+  },
+  navButton: {
+    padding: '12px 24px',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    minWidth: '180px',
+  },
+  // Keep all your original styles below:
   tokenDisplay: {
     display: 'flex',
     justifyContent: 'center',

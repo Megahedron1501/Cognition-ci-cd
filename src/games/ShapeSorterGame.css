@@ -1,0 +1,194 @@
+.shape-sorter-game {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.score-board {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.score {
+  font-size: 1.2rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.reset-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.reset-btn:hover {
+  transform: scale(1.05);
+}
+
+.message {
+  text-align: center;
+  font-size: 1.5rem;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  min-height: 30px;
+}
+
+.bins-container {
+  display: flex;
+  justify-content: space-around;
+  margin: 40px 0;
+  gap: 20px;
+}
+
+.bin {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  flex: 1;
+  color: #333;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bin-shape {
+  width: 80px;
+  height: 80px;
+  margin: 10px auto;
+}
+
+.bin-shape.circle {
+  border-radius: 50%;
+  background: #4CAF50;
+}
+
+.bin-shape.square {
+  background: #2196F3;
+}
+
+.bin-shape.triangle {
+  width: 0;
+  height: 0;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 80px solid #FF9800;
+  background: transparent !important;
+}
+
+.bin-label {
+  font-weight: bold;
+  margin: 10px 0;
+  font-size: 1.2rem;
+}
+
+.bin-count {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.bin-drop-zone {
+  margin-top: 10px;
+  padding: 10px;
+  background: #e3f2fd;
+  border: 2px dashed #2196F3;
+  border-radius: 10px;
+  color: #1565c0;
+  font-weight: bold;
+}
+
+.shapes-container {
+  position: relative;
+  height: 200px;
+  margin: 40px 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+}
+
+.shape {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.shape:hover {
+  transform: scale(1.1);
+}
+
+.shape-inner {
+  width: 50px;
+  height: 50px;
+  background: white;
+  opacity: 0.7;
+}
+
+.shape-inner.circle {
+  border-radius: 50%;
+}
+
+.shape-inner.triangle {
+  width: 0;
+  height: 0;
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+  border-bottom: 50px solid white;
+  background: transparent !important;
+}
+
+.shape-label {
+  margin-top: 5px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.instructions {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  color: #333;
+  margin-top: 30px;
+}
+
+.instructions h3 {
+  color: #2196F3;
+  margin-top: 0;
+}
+
+.instructions ol {
+  padding-left: 20px;
+}
+
+.instructions li {
+  margin: 10px 0;
+  line-height: 1.5;
+}
