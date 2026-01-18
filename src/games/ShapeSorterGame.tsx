@@ -97,9 +97,13 @@ const ShapeSorterGame: React.FC = () => {
           <div 
             key={bin.type}
             className="bin"
-            onDragOver={e => e.preventDefault()}
-            onDrop={() => {
-              // Simplified drag-drop - in real version would use drag events
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const shapeId = e.dataTransfer.getData('shapeId');
+              if (shapeId) {
+                handleDrop(parseInt(shapeId), bin.type);
+              }
             }}
           >
             <div className={`bin-shape ${bin.type}`}></div>
@@ -125,14 +129,10 @@ const ShapeSorterGame: React.FC = () => {
               cursor: 'grab'
             }}
             draggable
-            onDragStart={e => {
+            onDragStart={(e) => {
               e.dataTransfer.setData('shapeId', shape.id.toString());
             }}
-            onClick={() => {
-              // For now, just cycle through bins on click
-              const currentBinIndex = bins.findIndex(b => b.type === shape.type);
-              handleDrop(shape.id, shape.type);
-            }}
+            onClick={() => handleDrop(shape.id, shape.type)}
           >
             <div className={`shape-inner ${shape.type}`}></div>
             <div className="shape-label">{shape.type}</div>
