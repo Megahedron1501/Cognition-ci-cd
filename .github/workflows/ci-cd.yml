@@ -2,7 +2,7 @@ name: Cognition CI/CD
 
 on:
   push:
-    branches: [ master, experiment/new-feature, fix/dependencies ]
+    branches: [ '*' ]
   pull_request:
     branches: [ '*', 'experiment/new-feature', 'fix/dependencies' ]
 jobs:
