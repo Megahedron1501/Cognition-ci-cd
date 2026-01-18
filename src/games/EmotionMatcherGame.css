@@ -1,0 +1,180 @@
+.emotion-matcher-game {
+  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+  min-height: 80vh;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.score-board {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.score {
+  font-size: 1.2rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.reset-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.reset-btn:hover {
+  transform: scale(1.05);
+}
+
+.message {
+  text-align: center;
+  font-size: 1.5rem;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  min-height: 30px;
+}
+
+.instructions {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 15px;
+  color: #333;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.instructions h3 {
+  color: #2196F3;
+  margin-top: 0;
+}
+
+.emojis-container, .words-container {
+  margin: 40px 0;
+}
+
+.emojis-container h3, .words-container h3 {
+  color: #FFD700;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.cards-row {
+  position: relative;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  margin: 20px 0;
+}
+
+.emotion-card, .word-card {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.emotion-card {
+  background: rgba(76, 175, 80, 0.9);
+  cursor: grab;
+}
+
+.emotion-card:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.word-card {
+  background: rgba(33, 150, 243, 0.9);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.emotion-card.matched, .word-card.matched {
+  opacity: 0.5;
+  cursor: default;
+  transform: scale(0.9);
+}
+
+.emoji {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.word {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+}
+
+.drag-hint, .drop-hint {
+  font-size: 0.8rem;
+  margin-top: 5px;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.emotion-guide {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  color: #333;
+  margin-top: 40px;
+}
+
+.emotion-guide h4 {
+  color: #2196F3;
+  text-align: center;
+  margin-top: 0;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.guide-emoji {
+  font-size: 1.5rem;
+}
+
+.guide-word {
+  font-weight: bold;
+  color: #333;
+}

@@ -2,14 +2,15 @@
 import React, { useState } from 'react';
 import './App.css';
 import ShapeSorterGame from './games/ShapeSorterGame'
+import EmotionMatcherGame from './games/EmotionMatcherGame';
 
 function App() {
   const [tokens, setTokens] = useState(0);
   const totalTokens = 5;
   
-  // 🆕 ADD THIS LINE: Game view state
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame'>('tokenBoard');
-
+  // 🆕 ADD: Game view state
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame'>('tokenBoard');
+ 
   const addToken = () => {
     if (tokens < totalTokens) {
       setTokens(tokens + 1);
@@ -39,7 +40,7 @@ function App() {
         <p style={styles.subtitle}>For: <strong>Joshua: </strong> | Goal: {totalTokens} tokens</p>
       </div>
 
-      {/* 🆕 ADD THIS NAVIGATION SECTION */}
+      {/* 🆕  NAVIGATION SECTION */}
       <div style={styles.navigation}>
         <button 
           onClick={() => setCurrentView('tokenBoard')}
@@ -59,9 +60,18 @@ function App() {
         >
           🎯 Shape Sorter Game
         </button>
+        <button 
+        onClick={() => setCurrentView('emotionGame')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'emotionGame' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+  🎭 Emotion Matcher
+        </button>
       </div>
 
-      {/* 🆕 ADD THIS VIEW SWITCHER */}
+      {/* 🆕 VIEW SWITCHER */}
       {currentView === 'tokenBoard' ? (
         // Your existing token board code
         <>
@@ -150,6 +160,10 @@ function App() {
       ) : (
         // 🆕 SHAPE SORTER GAME VIEW
         <ShapeSorterGame />
+      )}
+
+      {currentView === 'emotionGame' && (
+        <EmotionMatcherGame />
       )}
 
       {/* Demo Notes (for BCBA) */}
