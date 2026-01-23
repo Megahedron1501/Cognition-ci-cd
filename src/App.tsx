@@ -1,15 +1,16 @@
 // App.tsx - VISUAL TOKEN BOARD WITH SOUND
 import React, { useState } from 'react';
 import './App.css';
-import ShapeSorterGame from './games/ShapeSorterGame'
+import ShapeSorterGame from './games/ShapeSorterGame';
 import EmotionMatcherGame from './games/EmotionMatcherGame';
+import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
 
 function App() {
   const [tokens, setTokens] = useState(0);
   const totalTokens = 5;
   
   // 🆕 ADD: Game view state
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder'>('tokenBoard');
  
   const addToken = () => {
     if (tokens < totalTokens) {
@@ -40,7 +41,7 @@ function App() {
         <p style={styles.subtitle}>For: <strong>Joshua: </strong> | Goal: {totalTokens} tokens</p>
       </div>
 
-      {/* 🆕  NAVIGATION SECTION */}
+      {/* 🆕  NAVIGATION SECTION - FIXED */}
       <div style={styles.navigation}>
         <button 
           onClick={() => setCurrentView('tokenBoard')}
@@ -61,19 +62,28 @@ function App() {
           🎯 Shape Sorter Game
         </button>
         <button 
-        onClick={() => setCurrentView('emotionGame')}
+          onClick={() => setCurrentView('emotionGame')}
           style={{
             ...styles.navButton,
             backgroundColor: currentView === 'emotionGame' ? '#4CAF50' : '#6c757d'
           }}
         >
-  🎭 Emotion Matcher
+          🎭 Emotion Matcher
+        </button>
+        <button 
+          onClick={() => setCurrentView('scheduleBuilder')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'scheduleBuilder' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          📅 Schedule Builder
         </button>
       </div>
 
-      {/* 🆕 VIEW SWITCHER */}
-      {currentView === 'tokenBoard' ? (
-        // Your existing token board code
+      {/* 🆕 VIEW SWITCHER - FIXED */}
+      {currentView === 'tokenBoard' && (
+        // Token board code
         <>
           {/* Token Display - CIRCLES! */}
           <div style={styles.tokenDisplay}>
@@ -157,14 +167,11 @@ function App() {
             </div>
           )}
         </>
-      ) : (
-        // 🆕 SHAPE SORTER GAME VIEW
-        <ShapeSorterGame />
       )}
 
-      {currentView === 'emotionGame' && (
-        <EmotionMatcherGame />
-      )}
+      {currentView === 'shapeGame' && <ShapeSorterGame />}
+      {currentView === 'emotionGame' && <EmotionMatcherGame />}
+      {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
 
       {/* Demo Notes (for BCBA) */}
       <div style={styles.demoNotes}>

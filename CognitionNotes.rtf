@@ -1,0 +1,201 @@
+{\rtf1\fbidis\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset1 Segoe UI Symbol;}{\f2\fnil Calibri;}{\f3\fnil\fcharset1 Segoe UI Emoji;}{\f4\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang9 Tech Stack\par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 React  (create-react-app)\par
+{\pntext\f4\'B7\tab}Tailwind CSS (for styling)\par
+{\pntext\f4\'B7\tab}Howler.js (for audio)\par
+{\pntext\f4\'B7\tab}FileReaderAPI (load local images)\par
+{\pntext\f4\'B7\tab}CSV export (via simple JavaScript)\par
+
+\pard\sa200\sl276\slmult1\par
+First Project\par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 load folder of images (dog, cat, car, house)\par
+{\pntext\f4\'B7\tab}set parameters: field size, reinforcement schedule (?)\par
+{\pntext\f4\'B7\tab}Play: shows "Touch dog" >> child touches dog >> token added \par
+{\pntext\f4\'B7\tab}End: shows "x/10 correct, avg latency ns"\par
+{\pntext\f4\'B7\tab}Export: CSV with timestamp, stimulus, response, latency\par
+{\pntext\f4\'B7\tab}IDEAS- customizable input fields by the sitting bcba so they can make it customizable for the individualized aspect\par
+
+\pard\sa200\sl276\slmult1 Stack Preference\par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Python/FastAPI\par
+{\pntext\f4\'B7\tab}Create github repo with docker compose setup\par
+{\pntext\f4\'B7\tab}design template json schema\par
+{\pntext\f4\'B7\tab}build stimulusdisplay component (show 4 images in a 2x2 grid)\par
+
+\pard\sa200\sl276\slmult1 General description \par
+so right now it only has a thing where *(well you can probalby see "see" it)* you press a button and it adds a token  up to 5 and plays a coinget sound.  this is nowhere near my vision.  Do you know what boom cards is?  boom cards kind of sucks noodles.  I want an app that you can like sort a bunch of shapes by shape/size/color, where you can like recognize facial expressions, you can sort items by categories/features, you can work on pronoun identification, maybe things that help with social skills (idk how that would work yet), maybe have like visual schedule capabilities.  also another thing boom card doesn't really do is it doesn't implement anything based on aba principles IE- big one i am thinking of is reinforcement.  Maybe it could also provide reinforcement.  maybe I could make it (and it would have to be very user friendly for this but) so the bcba could like customize it for individual use.  things that *THIS* patient might respond to might not be as good for *THAT* patient who might respond to other idk [stuff] better.  but for something like that to make it customizable would have to be very friendly for the bcba who might not be as tech saavy.  so i can't rely on having them come to a github repository and cloning it and running a bunch of commands to install tools and making sure the filepath is there in line so the commands will work and etc etc...  You see the scope of this project?  so point is, where we are right now is NOWHERE NEAR ready to work.  however i was with bcba friday and we were complaining how you cant go back to a previous card in boom cards and I was like "honestly i have quite a few user friendly issues with boom cards, I could make something better."  and she was like you should.  it'd be a great space to get into. \par
+Questions to be addressed by the thing\par
+Questions for You:\par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 What's the most frustrating limitation in current tools you use daily?\par
+{\pntext\f4\'B7\tab}What ONE feature would make your RBT job 50% easier tomorrow?\par
+{\pntext\f4\'B7\tab}How do BCBAs currently customize activities for clients? (Paper? Photoshop?)\par
+{\pntext\f4\'B7\tab}What's your biggest technical worry about building this?\par
+{\pntext\f4\'B7\tab}This is an incredible project scope, and you're thinking about it exactly right. The fact that you're starting with a working token board (with sound!) proves you can build this piece by piece.\par
+{\pntext\f4\'B7\tab}Want to start architecting the first serious feature? Or should we dive into making the token board customizable first?\par
+
+\pard\sa200\sl276\slmult1\par
+Need to do for later\par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Maybe downgrade node.js 18?  \par
+
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-360\li1080\sa200\sl276\slmult1 npm install --legacy-peer-deps\par
+{\pntext\f4\'B7\tab}package.json says wants v2.8.2\par
+{\pntext\f4\'B7\tab}package-lock.json says we have 1.10.2 installed\par
+
+\pard\sa200\sl276\slmult1 ***nvm.exe to control versions, may need to add this to later stuff to make it usable for people***\par
+\par
+\b Cognition - ABA Therapy Digital Tools Platform\par
+\b0 Cognition is a professional web-based platform designed to enhance Applied Behavior Analysis (ABA) therapy sessions through interactive, customizable digital tools. Built by an RBT with firsthand clinical experience, it addresses real pain points in therapy delivery while demonstrating cutting-edge technical implementation.\par
+\par
+\f1\u-10180?\u-8273?\f2  \f0 Core Philosophy\par
+Bridge the gap between therapeutic effectiveness and technological innovation by creating tools that:\par
+\par
+Adhere to ABA principles\par
+\par
+Are intuitive for clinicians\par
+\par
+Provide engaging experiences for clients\par
+\par
+Collect meaningful data\par
+\par
+Scale across devices and settings\par
+\par
+\f3\u-10179?\u-8480?\u-497?\f2  \f0 Current Features\par
+1. Digital Token Board System \f1\u-10180?\u-8251?\f0\par
+Visual 5-token economy with gold-star rewards\par
+\par
+Immediate auditory feedback (coin sounds)\par
+\par
+Celebration animation upon completion\par
+\par
+One-click reset between activities\par
+\par
+Tablet-optimized touch interface\par
+\par
+2. Shape Sorter Game \f1\u-10180?\u-8273?\f0\par
+Drag-and-drop shape discrimination task\par
+\par
+Color/shape matching with immediate feedback\par
+\par
+Scoring system with visual progress tracking\par
+\par
+Built for fine motor skill practice\par
+\par
+Error correction with gentle guidance\par
+\par
+3. Emotion Matcher Game \f1\u-10180?\u-8275?\f0\par
+Facial expression recognition training\par
+\par
+Emotion-to-word matching (Happy, Sad, Angry, etc.)\par
+\par
+Social skills development focus\par
+\par
+Visual feedback for correct/incident responses\par
+\par
+Progressive difficulty scaffolding\par
+\par
+4. Professional Platform Features\par
+Responsive Design: Works on tablets, desktops, mobile\par
+\par
+Activity Navigation: Quick-switch between tools\par
+\par
+Sound Integration: Therapeutic auditory feedback\par
+\par
+Professional UI: Clean, distraction-free interface\par
+\par
+Session-Ready: No login required, immediate use\par
+\par
+\f1\u-10179?\u-8576?\f2  \f0 Technical Implementation\par
+Frontend\par
+React 18 with TypeScript for type safety\par
+\par
+Custom CSS with responsive design principles\par
+\par
+Drag-and-Drop API for interactive activities\par
+\par
+Audio API for immediate feedback\par
+\par
+DevOps & Infrastructure\par
+GitHub Actions CI/CD pipeline\par
+\par
+Vercel for automatic deployments\par
+\par
+Git with professional branching strategy\par
+\par
+Automated Testing on all pushes\par
+\par
+Architecture\par
+Component-based design for scalability\par
+\par
+Separate activity modules for easy expansion\par
+\par
+Centralized navigation system\par
+\par
+No backend dependencies (client-only)\par
+\par
+\f1\u-10180?\u-8219?\f2  \f0 Clinical Considerations\par
+No PHI Storage: All data client-side only\par
+\par
+Motor Skill Accommodations: Multiple interaction methods\par
+\par
+Visual Clarity: High contrast, simple layouts\par
+\par
+Auditory Options: Configurable sound feedback\par
+\par
+Therapeutic Intent: Each activity targets specific skills\par
+\par
+\f1\u-10179?\u-8914?\f2  \f0 Future Roadmap\par
+Customizable token counts and rewards\par
+\par
+Progress tracking and data visualization\par
+\par
+Printable session reports\par
+\par
+Therapist dashboard for multiple clients\par
+\par
+Evidence-based activity library expansion\par
+\par
+HIPAA-compliant data storage options\par
+\par
+Mobile app (React Native)\par
+\par
+BCBA customization portal\par
+\par
+\f1\u-10179?\u-9028?\f2  \f0 Business Model\par
+Portfolio Demonstration (Current)\par
+\par
+Clinic Licensing for professional use\par
+\par
+SaaS Subscription for larger organizations\par
+\par
+Custom Development for specialized needs\par
+\par
+Training & Implementation services\par
+\par
+\f1\u-10180?\u-8301?\f2  \f0 Educational Value\par
+Built as a portfolio piece demonstrating:\par
+\par
+Full-stack development skills\par
+\par
+Domain expertise in ABA therapy\par
+\par
+Professional software engineering practices\par
+\par
+Business acumen (IP protection, licensing)\par
+\par
+Problem-solving at the intersection of healthcare and technology\par
+\par
+\f1\u-10180?\u-8432?\f2  \f0 Live Deployment\par
+URL: [Your Vercel Deployment]\par
+\par
+Source Code: [GitHub Repository]\par
+\par
+Status: Actively maintained with weekly updates\par
+\par
+Cognition represents the future of ABA therapy tools\f2\emdash where clinical expertise meets modern software engineering to create effective, engaging, and scalable therapeutic experiences.\f0\par
+}
+ 
