@@ -304,6 +304,4 @@ const styles = {
   },
 };
 
-export default App;/ /   T e s t   c o m m i t  
- / /   A n o t h e r   t e s t   f o r   A c t i o n s  
- 
+export default App;
