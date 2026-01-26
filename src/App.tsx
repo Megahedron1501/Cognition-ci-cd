@@ -5,9 +5,10 @@ import TokenBoard from './components/TokenBoard/TokenBoard';
 import ShapeSorterGame from './games/ShapeSorterGame';
 import EmotionMatcherGame from './games/EmotionMatcherGame';
 import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
+import SortByCategories from './games/SortByCategories';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories'>('tokenBoard');
 
   return (
     <div style={styles.container}>
@@ -55,6 +56,15 @@ function App() {
         >
           📅 Schedule Builder
         </button>
+        <button
+          onClick={() => setCurrentView('sortByCategories')}
+          style = {{
+            ...styles.navButton,
+            backgroundColor: currentView === 'sortByCategories' ? '#4CAF50' : '#6c757d' 
+           }}
+        >
+          🎯 Sort By Categories
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -63,6 +73,7 @@ function App() {
         {currentView === 'shapeGame' && <ShapeSorterGame />}
         {currentView === 'emotionGame' && <EmotionMatcherGame />}
         {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
+        {currentView === 'sortByCategories' && <SortByCategories />}
       </div>
     </div>
   );
