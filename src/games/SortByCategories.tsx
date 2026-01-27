@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './SortByCategories.css';
 
 type Category = 'color' | 'shape' | 'animal' | 'food' | 'clothing';
@@ -10,8 +10,32 @@ interface GameItem {
   color: string;
   shape?: string;
   category: string;
-  image?: string; // For future image support
+  image?: string;
 }
+
+// MOVE itemDatabase OUTSIDE the component
+const itemDatabase: GameItem[] = [
+  // Colors
+  { id: 1, name: 'Red Circle', color: 'red', category: 'color' },
+  { id: 2, name: 'Blue Circle', color: 'blue', category: 'color' },
+  { id: 3, name: 'Green Circle', color: 'green', category: 'color' },
+  { id: 4, name: 'Yellow Circle', color: 'yellow', category: 'color' },
+  { id: 5, name: 'Orange Circle', color: 'orange', category: 'color' },
+  { id: 6, name: 'Purple Circle', color: 'purple', category: 'color' },
+  
+  // Shapes
+  { id: 7, name: 'Circle', color: 'blue', shape: 'circle', category: 'shape' },
+  { id: 8, name: 'Square', color: 'blue', shape: 'square', category: 'shape' },
+  { id: 9, name: 'Triangle', color: 'blue', shape: 'triangle', category: 'shape' },
+  { id: 10, name: 'Star', color: 'blue', shape: 'star', category: 'shape' },
+  { id: 11, name: 'Heart', color: 'blue', shape: 'heart', category: 'shape' },
+  
+  // Animals
+  { id: 12, name: 'Dog', color: 'brown', category: 'animal' },
+  { id: 13, name: 'Cat', color: 'gray', category: 'animal' },
+  { id: 14, name: 'Bird', color: 'yellow', category: 'animal' },
+  { id: 15, name: 'Fish', color: 'orange', category: 'animal' },
+];
 
 const SortByCategories: React.FC = () => {
   // Game state
@@ -21,7 +45,7 @@ const SortByCategories: React.FC = () => {
   const [message, setMessage] = useState('');
   const [gameComplete, setGameComplete] = useState(false);
   
-  // Game configuration (hardcoded for now, customizable later)
+  // Game configuration
   const [currentCategory, setCurrentCategory] = useState<Category>('color');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [target, setTarget] = useState('');
@@ -30,35 +54,10 @@ const SortByCategories: React.FC = () => {
   const [items, setItems] = useState<GameItem[]>([]);
   const [targetItems, setTargetItems] = useState<GameItem[]>([]);
 
-  // Available items database
-  const itemDatabase: GameItem[] = [
-    // Colors (simple circles for now)
-    { id: 1, name: 'Red Circle', color: 'red', category: 'color' },
-    { id: 2, name: 'Blue Circle', color: 'blue', category: 'color' },
-    { id: 3, name: 'Green Circle', color: 'green', category: 'color' },
-    { id: 4, name: 'Yellow Circle', color: 'yellow', category: 'color' },
-    { id: 5, name: 'Orange Circle', color: 'orange', category: 'color' },
-    { id: 6, name: 'Purple Circle', color: 'purple', category: 'color' },
-    
-    // Shapes (all blue for shape discrimination)
-    { id: 7, name: 'Circle', color: 'blue', shape: 'circle', category: 'shape' },
-    { id: 8, name: 'Square', color: 'blue', shape: 'square', category: 'shape' },
-    { id: 9, name: 'Triangle', color: 'blue', shape: 'triangle', category: 'shape' },
-    { id: 10, name: 'Star', color: 'blue', shape: 'star', category: 'shape' },
-    { id: 11, name: 'Heart', color: 'blue', shape: 'heart', category: 'shape' },
-    
-    // Animals (simple category)
-    { id: 12, name: 'Dog', color: 'brown', category: 'animal' },
-    { id: 13, name: 'Cat', color: 'gray', category: 'animal' },
-    { id: 14, name: 'Bird', color: 'yellow', category: 'animal' },
-    { id: 15, name: 'Fish', color: 'orange', category: 'animal' },
-  ];
-
-  // Initialize a new round
-  const startNewRound = () => {
+  // Initialize a new round - FIXED with useCallback and proper dependencies
+  const startNewRound = useCallback(() => {
     setMessage('');
     
-    // For now, rotate categories: color → shape → animal → repeat
     const categories: Category[] = ['color', 'shape', 'animal'];
     const newCategory = categories[(round - 1) % categories.length];
     setCurrentCategory(newCategory);
@@ -79,6 +78,9 @@ const SortByCategories: React.FC = () => {
         newTarget = ['Dog', 'Cat', 'Bird', 'Fish'][Math.floor(Math.random() * 4)];
         filteredItems = itemDatabase.filter(item => item.category === 'animal');
         break;
+      default:
+        newTarget = 'red';
+        filteredItems = itemDatabase.filter(item => item.category === 'color');
     }
     
     setTarget(newTarget);
@@ -90,9 +92,9 @@ const SortByCategories: React.FC = () => {
     
     // Shuffle and select items
     const shuffled = [...filteredItems].sort(() => Math.random() - 0.5);
-    const selectedItems = shuffled.slice(0, numItems);
+    const selectedItems = shuffled.slice(0, Math.min(numItems, filteredItems.length));
     
-    // Ensure at least one target item exists, add if not
+    // Ensure at least one target item exists
     const hasTarget = selectedItems.some(item => 
       newCategory === 'color' ? item.color === newTarget :
       newCategory === 'shape' ? item.shape === newTarget :
@@ -100,12 +102,12 @@ const SortByCategories: React.FC = () => {
     );
     
     if (!hasTarget && selectedItems.length > 0) {
-      // Replace a random item with a target item
       const targetItem = filteredItems.find(item => 
         newCategory === 'color' ? item.color === newTarget :
         newCategory === 'shape' ? item.shape === newTarget :
         newCategory === 'animal' ? item.name === newTarget : false
       );
+      
       if (targetItem) {
         const randomIndex = Math.floor(Math.random() * selectedItems.length);
         selectedItems[randomIndex] = targetItem;
@@ -114,40 +116,36 @@ const SortByCategories: React.FC = () => {
     
     setItems(selectedItems);
     
-    // Identify target items for highlighting
+    // Identify target items
     const targets = selectedItems.filter(item => 
       newCategory === 'color' ? item.color === newTarget :
       newCategory === 'shape' ? item.shape === newTarget :
       newCategory === 'animal' ? item.name === newTarget : false
     );
     setTargetItems(targets);
-  };
+  }, [round, difficulty]); // itemDatabase is outside, so not needed here
 
-  // Handle item click
+  // Handle item click - FIXED setRound with functional update
   const handleItemClick = (item: GameItem) => {
     const isTarget = targetItems.some(t => t.id === item.id);
     
     if (isTarget) {
-      // Correct!
       playSound('correct');
       setScore(score + 1);
       setMessage('Great job! ✅');
       
-      // Move to next round or end game
       setTimeout(() => {
         if (round < totalRounds) {
-          setRound(round + 1);
+          setRound(prevRound => prevRound + 1); // FIX: Use functional update
         } else {
           setGameComplete(true);
           playSound('celebration');
         }
       }, 1000);
     } else {
-      // Incorrect
       playSound('incorrect');
       setMessage('Try again! Look for the ' + target);
       
-      // Highlight correct items briefly
       const originalItems = [...items];
       setItems([]);
       setTimeout(() => setItems(originalItems), 500);
@@ -160,14 +158,14 @@ const SortByCategories: React.FC = () => {
       if (type === 'correct') {
         const audio = new Audio('/sounds/coin.mp3');
         audio.volume = 0.3;
-        audio.play();
+        audio.play().catch(() => {}); // Silently fail if audio can't play
       } else if (type === 'celebration') {
         const audio = new Audio('/sounds/celebration.mp3');
         audio.volume = 0.5;
-        audio.play();
+        audio.play().catch(() => {});
       }
     } catch (error) {
-      console.log('Sound error:', error);
+      // Silently fail
     }
   };
 
@@ -185,12 +183,12 @@ const SortByCategories: React.FC = () => {
     resetGame();
   };
 
-  // Initialize on component mount and round change
+  // Initialize on component mount and round change - FIXED
   useEffect(() => {
-    if (!gameComplete) {
+    if (!gameComplete && round <= totalRounds) {
       startNewRound();
     }
-  }, [round, gameComplete]);
+  }, [round, gameComplete, startNewRound, totalRounds]);
 
   // Get category display text
   const getCategoryText = () => {
@@ -271,13 +269,12 @@ const SortByCategories: React.FC = () => {
       case 'triangle': return 'polygon(50% 0%, 0% 100%, 100% 100%)';
       case 'star': return 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
       case 'heart': return 'polygon(50% 0%, 100% 35%, 100% 70%, 50% 100%, 0% 70%, 0% 35%)';
-      default: return 'circle(50% at 50% 50%)'; // circle
+      default: return 'circle(50% at 50% 50%)';
     }
   };
 
   return (
     <div className="sort-by-categories">
-      {/* Game Header */}
       <div className="game-header">
         <h2>🎯 Sort By Categories</h2>
         <div className="game-info">
@@ -287,7 +284,6 @@ const SortByCategories: React.FC = () => {
         </div>
       </div>
 
-      {/* Difficulty Selector */}
       <div className="difficulty-selector">
         <h3>Difficulty:</h3>
         <div className="difficulty-buttons">
@@ -308,7 +304,6 @@ const SortByCategories: React.FC = () => {
         </div>
       </div>
 
-      {/* Game Complete Screen */}
       {gameComplete ? (
         <div className="game-complete">
           <div className="celebration">
@@ -326,7 +321,6 @@ const SortByCategories: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Game Prompt */}
           <div className="game-prompt">
             <h3>{getPromptText()}</h3>
             <div className="category-badge">
@@ -334,14 +328,12 @@ const SortByCategories: React.FC = () => {
             </div>
           </div>
 
-          {/* Message Display */}
           {message && (
             <div className={`message ${message.includes('✅') ? 'correct' : 'incorrect'}`}>
               {message}
             </div>
           )}
 
-          {/* Game Items Grid */}
           <div className={`items-grid ${difficulty}`}>
             {items.map((item) => (
               <div
@@ -354,7 +346,6 @@ const SortByCategories: React.FC = () => {
             ))}
           </div>
 
-          {/* Game Instructions */}
           <div className="instructions">
             <p>Click on the item that matches the category and target.</p>
             <p>Categories rotate each round: Color → Shape → Animal</p>
