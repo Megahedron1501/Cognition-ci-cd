@@ -1,0 +1,214 @@
+/* src/components/ChoiceBoard/ChoiceBoard.css */
+.choice-board {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.choice-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.choice-header h1 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.demo-note {
+  color: #e74c3c;
+  font-weight: bold;
+  font-size: 1.1rem;
+  background: #ffeaa7;
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+.instruction {
+  font-size: 1.3rem;
+  color: #34495e;
+  margin-top: 20px;
+}
+
+.choices-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 50px 0;
+  flex-wrap: wrap;
+}
+
+.choice-button {
+  width: 250px;
+  height: 300px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  border: 5px solid transparent;
+}
+
+.choice-button:hover:not(:disabled) {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.choice-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.choice-button.selected {
+  border-color: #2c3e50;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(44, 62, 80, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba(44, 62, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(44, 62, 80, 0); }
+}
+
+.choice-emoji {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.choice-name {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.choice-description {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.celebration {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border-radius: 15px;
+  padding: 30px;
+  margin: 40px 0;
+  text-align: center;
+  color: white;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.celebration h2 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+}
+
+.reinforcer-text {
+  font-size: 1.2rem;
+  margin: 20px 0;
+  background: rgba(255,255,255,0.2);
+  padding: 15px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.celebration-emoji {
+  font-size: 2.5rem;
+  margin-top: 15px;
+}
+
+.reset-section {
+  text-align: center;
+  margin: 30px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.reset-button {
+  background: #95a5a6;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.reset-button:hover {
+  background: #7f8c8d;
+}
+
+.reset-hint {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+.demo-instructions,
+.clinical-rationale {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 15px;
+  margin: 30px 0;
+  border-left: 5px solid #3498db;
+}
+
+.demo-instructions h3,
+.clinical-rationale h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.demo-instructions ul,
+.clinical-rationale ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.demo-instructions li,
+.clinical-rationale li {
+  margin-bottom: 8px;
+  color: #34495e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .choices-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .choice-button {
+    width: 100%;
+    max-width: 300px;
+    height: 200px;
+  }
+  
+  .choice-emoji {
+    font-size: 3rem;
+  }
+  
+  .choice-name {
+    font-size: 1.5rem;
+  }
+}

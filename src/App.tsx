@@ -7,10 +7,11 @@ import EmotionMatcherGame from './games/EmotionMatcherGame';
 import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
 import SortByCategories from './games/SortByCategories';
 import LaunchScreen from './components/LaunchScreen/LaunchScreen';
+import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard'>('tokenBoard');
 
   if (!hasLaunched) {
     return <LaunchScreen onLaunch={() => setHasLaunched(true)} />;
@@ -71,15 +72,30 @@ function App() {
         >
           🎯 Sort By Categories
         </button>
+        <button
+          onClick={() => setCurrentView('choiceBoard')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'choiceBoard' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          🎯 Choice Board (Demo)
+        </button>
       </div>
 
       {/* Main Content Area */}
       <div style={styles.content}>
-        {currentView === 'tokenBoard' && <TokenBoard clientName="Joshua" />}
+        {currentView === 'tokenBoard' && (
+          <TokenBoard 
+            clientName="REDACTED"
+            onAllTokensEarned={() => setCurrentView('choiceBoard')}
+            />
+          )}
         {currentView === 'shapeGame' && <ShapeSorterGame />}
         {currentView === 'emotionGame' && <EmotionMatcherGame />}
         {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
         {currentView === 'sortByCategories' && <SortByCategories />}
+        {currentView === 'choiceBoard' && <ChoiceBoard />}
       </div>
     </div>
   );
