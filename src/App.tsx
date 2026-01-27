@@ -6,9 +6,15 @@ import ShapeSorterGame from './games/ShapeSorterGame';
 import EmotionMatcherGame from './games/EmotionMatcherGame';
 import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
 import SortByCategories from './games/SortByCategories';
+import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 
 function App() {
+  const [hasLaunched, setHasLaunched] = useState(false);
   const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories'>('tokenBoard');
+
+  if (!hasLaunched) {
+    return <LaunchScreen onLaunch={() => setHasLaunched(true)} />;
+  }
 
   return (
     <div style={styles.container}>
