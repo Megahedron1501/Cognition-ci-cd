@@ -128,11 +128,15 @@ const ShapeSorterGame: React.FC = () => {
             onDragStart={e => {
               e.dataTransfer.setData('shapeId', shape.id.toString());
             }}
+<<<<<<< Updated upstream
             onClick={() => {
               // For now, just cycle through bins on click
               const currentBinIndex = bins.findIndex(b => b.type === shape.type);
               handleDrop(shape.id, shape.type);
             }}
+=======
+          
+>>>>>>> Stashed changes
           >
             <div className={`shape-inner ${shape.type}`}></div>
             <div className="shape-label">{shape.type}</div>
