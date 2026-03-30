@@ -1,6 +1,7 @@
 // App.tsx - VISUAL TOKEN BOARD WITH SOUND
 import React, { useState } from 'react';
 import './App.css';
+<<<<<<< Updated upstream
 import ShapeSorterGame from './games/ShapeSorterGame'
 
 function App() {
@@ -9,6 +10,20 @@ function App() {
   
   // 🆕 ADD THIS LINE: Game view state
   const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame'>('tokenBoard');
+=======
+import TokenBoard from './components/TokenBoard/TokenBoard';
+import ShapeSorterGame from './games/ShapeSorterGame';
+import EmotionMatcherGame from './games/EmotionMatcherGame';
+import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
+import SortByCategories from './games/SortByCategories';
+import LaunchScreen from './components/LaunchScreen/LaunchScreen';
+import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
+import MatchingGame from './games/MemoryMatchingGame'
+
+function App() {
+  const [hasLaunched, setHasLaunched] = useState(false);
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'matchingGame'>('tokenBoard');
+>>>>>>> Stashed changes
 
   const addToken = () => {
     if (tokens < totalTokens) {
@@ -59,6 +74,15 @@ function App() {
         >
           🎯 Shape Sorter Game
         </button>
+        <button
+          onClick={() => setCurrentView('matchingGame')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'matchingGame' ? '#4CAF50' : '#6c757d'
+  }}
+>
+  🧠 Memory Matcher
+</button>
       </div>
 
       {/* 🆕 ADD THIS VIEW SWITCHER */}
@@ -146,6 +170,7 @@ function App() {
               </div>
             </div>
           )}
+<<<<<<< Updated upstream
         </>
       ) : (
         // 🆕 SHAPE SORTER GAME VIEW
@@ -162,6 +187,14 @@ function App() {
           <li>✅ Ready for tablet use in sessions</li>
           <li>🚀 Future: Save progress, add sounds, customize tokens</li>
         </ul>
+=======
+        {currentView === 'shapeGame' && <ShapeSorterGame />}
+        {currentView === 'emotionGame' && <EmotionMatcherGame />}
+        {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
+        {currentView === 'sortByCategories' && <SortByCategories />}
+        {currentView === 'choiceBoard' && <ChoiceBoard />}
+        {currentView === 'matchingGame' && <MatchingGame />}
+>>>>>>> Stashed changes
       </div>
     </div>
   );
