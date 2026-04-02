@@ -132,7 +132,7 @@ const ShapeSorterGame: React.FC = () => {
             onDragStart={(e) => {
               e.dataTransfer.setData('shapeId', shape.id.toString());
             }}
-            onClick={() => handleDrop(shape.id, shape.type)}
+         
           >
             <div className={`shape-inner ${shape.type}`}></div>
             <div className="shape-label">{shape.type}</div>
