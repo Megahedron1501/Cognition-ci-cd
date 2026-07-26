@@ -17,6 +17,104 @@
   font-size: 1.2rem;
 }
 
+.settings-toggle-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background-color: #ECF0F1;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.settings-panel {
+  max-width: 400px;
+  margin: 0 auto 30px;
+  padding: 20px;
+  background-color: #FDF6E3;
+  border: 2px solid #E8DCB5;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.settings-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #2C3E50;
+}
+
+.settings-panel input {
+  padding: 6px;
+  font-size: 1rem;
+  margin-right: 10px;
+}
+
+.settings-panel input[type="number"] {
+  width: 80px;
+}
+
+.settings-panel input[type="text"] {
+  width: 220px;
+}
+
+.settings-panel select {
+  padding: 6px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.settings-panel hr {
+  margin: 15px 0;
+  border: none;
+  border-top: 1px solid #E8DCB5;
+}
+
+.schedule-fields {
+  margin: 10px 0;
+}
+
+.settings-panel button {
+  padding: 6px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.settings-note {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #7F8C8D;
+}
+
+.schedule-status {
+  text-align: center;
+  margin: 10px 0 20px;
+  color: #2C3E50;
+}
+
+.schedule-status p {
+  margin: 4px 0;
+}
+
+.record-response-button {
+  background-color: #3498DB;
+}
+
+.button-explainer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #7F8C8D;
+  max-width: 700px;
+  margin: -20px auto 20px;
+}
+
 .token-display {
   display: flex;
   justify-content: center;

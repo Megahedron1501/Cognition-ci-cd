@@ -23,3 +23,6 @@ src/components/Logos/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Claude Code local tool config (machine-specific)
+.claude/
