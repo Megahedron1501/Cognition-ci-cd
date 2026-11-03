@@ -14,17 +14,19 @@ interface GameItem {
   image?: string;
 }
 
-// One DTT-style trial: what was presented, what was clicked, and whether it
-// was correct. This is invisible to the player - it only surfaces in the
-// clinician-facing summary once the session ends.
+// One DTT-style trial per round, scored on the FIRST response only. Clicks
+// after an error are error correction, not new trials - they're counted in
+// `attempts` but never change `correct`. This is invisible to the player -
+// it only surfaces in the clinician-facing summary once the session ends.
 interface Trial {
   round: number;
   category: Category;
   target: string;
-  itemClicked: string;
-  correct: boolean;
+  itemClicked: string; // first response
+  correct: boolean; // first response was correct (independent)
   difficulty: Difficulty;
-  responseTimeMs: number;
+  responseTimeMs: number; // latency to first response
+  attempts: number; // total clicks until the correct item, including the first
 }
 
 // MOVE itemDatabase OUTSIDE the component
@@ -71,6 +73,10 @@ const SortByCategories: React.FC = () => {
   // Trial-by-trial data, for the clinician-facing summary only.
   const [trials, setTrials] = useState<Trial[]>([]);
   const roundStartRef = useRef<number>(Date.now());
+  // Whether this round's trial has already been recorded (first response in),
+  // and whether the round is finished (correct item found, waiting to advance).
+  const trialRecordedRef = useRef(false);
+  const roundResolvedRef = useRef(false);
 
   // Initialize a new round - FIXED with useCallback and proper dependencies
   const startNewRound = useCallback(() => {
@@ -142,23 +148,38 @@ const SortByCategories: React.FC = () => {
     );
     setTargetItems(targets);
     roundStartRef.current = Date.now();
+    trialRecordedRef.current = false;
+    roundResolvedRef.current = false;
   }, [round, difficulty]); // itemDatabase is outside, so not needed here
 
   // Handle item click - FIXED setRound with functional update
   const handleItemClick = (item: GameItem) => {
+    // Ignore extra clicks once the correct item is found (e.g. a double-click),
+    // so they can't log phantom attempts or advance the round twice.
+    if (roundResolvedRef.current) return;
+
     const isTarget = targetItems.some(t => t.id === item.id);
 
-    setTrials(prev => [...prev, {
-      round,
-      category: currentCategory,
-      target,
-      itemClicked: item.name,
-      correct: isTarget,
-      difficulty,
-      responseTimeMs: Date.now() - roundStartRef.current,
-    }]);
+    if (!trialRecordedRef.current) {
+      trialRecordedRef.current = true;
+      setTrials(prev => [...prev, {
+        round,
+        category: currentCategory,
+        target,
+        itemClicked: item.name,
+        correct: isTarget,
+        difficulty,
+        responseTimeMs: Date.now() - roundStartRef.current,
+        attempts: 1,
+      }]);
+    } else {
+      setTrials(prev => prev.map((t, i) =>
+        i === prev.length - 1 ? { ...t, attempts: t.attempts + 1 } : t
+      ));
+    }
 
     if (isTarget) {
+      roundResolvedRef.current = true;
       playSound('correct');
       setScore(score + 1);
       setMessage('Great job! ✅');
@@ -202,9 +223,11 @@ const SortByCategories: React.FC = () => {
   // Trial-level summary for the clinician-facing review - distinct from
   // `score`/`totalRounds`, which only count the final (eventually correct)
   // response per round and ignore wrong attempts along the way.
+  const independentCorrect = trials.filter(t => t.correct).length;
   const trialAccuracy = trials.length > 0
-    ? Math.round((trials.filter(t => t.correct).length / trials.length) * 100)
+    ? Math.round((independentCorrect / trials.length) * 100)
     : 0;
+  const errorCorrectionTrials = trials.filter(t => !t.correct).length;
   const avgResponseTimeMs = trials.length > 0
     ? Math.round(trials.reduce((sum, t) => sum + t.responseTimeMs, 0) / trials.length)
     : 0;
@@ -349,9 +372,6 @@ const SortByCategories: React.FC = () => {
             <div className="final-score">
               You scored <strong>{score}</strong> out of <strong>{totalRounds}</strong>!
             </div>
-            <div className="accuracy">
-              Accuracy: <strong>{Math.round((score / totalRounds) * 100)}%</strong>
-            </div>
             <button onClick={resetGame} className="play-again-btn">
               🔄 Play Again
             </button>
@@ -360,9 +380,10 @@ const SortByCategories: React.FC = () => {
           <div className="clinician-summary">
             <h3>💡 For Clinician Review</h3>
             <p>
-              Trial-level accuracy: <strong>{trialAccuracy}%</strong> ({trials.filter(t => t.correct).length}/{trials.length} responses)
+              First-response accuracy: <strong>{trialAccuracy}%</strong> ({independentCorrect}/{trials.length} trials correct independently)
             </p>
-            <p>Average response time: <strong>{avgResponseTimeMs}ms</strong></p>
+            <p>Trials needing error correction: <strong>{errorCorrectionTrials}</strong></p>
+            <p>Average latency to first response: <strong>{avgResponseTimeMs}ms</strong></p>
             <ul>
               {Object.entries(categoryBreakdown).map(([category, stats]) => (
                 <li key={category}>
