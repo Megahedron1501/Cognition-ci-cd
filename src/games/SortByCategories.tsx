@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SortByCategories.css';
+import { playSound as playAudioFile } from '../utils/sound';
 
 type Category = 'color' | 'shape' | 'animal' | 'food' | 'clothing';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -11,6 +12,19 @@ interface GameItem {
   shape?: string;
   category: string;
   image?: string;
+}
+
+// One DTT-style trial: what was presented, what was clicked, and whether it
+// was correct. This is invisible to the player - it only surfaces in the
+// clinician-facing summary once the session ends.
+interface Trial {
+  round: number;
+  category: Category;
+  target: string;
+  itemClicked: string;
+  correct: boolean;
+  difficulty: Difficulty;
+  responseTimeMs: number;
 }
 
 // MOVE itemDatabase OUTSIDE the component
@@ -53,6 +67,10 @@ const SortByCategories: React.FC = () => {
   // Game items
   const [items, setItems] = useState<GameItem[]>([]);
   const [targetItems, setTargetItems] = useState<GameItem[]>([]);
+
+  // Trial-by-trial data, for the clinician-facing summary only.
+  const [trials, setTrials] = useState<Trial[]>([]);
+  const roundStartRef = useRef<number>(Date.now());
 
   // Initialize a new round - FIXED with useCallback and proper dependencies
   const startNewRound = useCallback(() => {
@@ -123,17 +141,28 @@ const SortByCategories: React.FC = () => {
       newCategory === 'animal' ? item.name === newTarget : false
     );
     setTargetItems(targets);
+    roundStartRef.current = Date.now();
   }, [round, difficulty]); // itemDatabase is outside, so not needed here
 
   // Handle item click - FIXED setRound with functional update
   const handleItemClick = (item: GameItem) => {
     const isTarget = targetItems.some(t => t.id === item.id);
-    
+
+    setTrials(prev => [...prev, {
+      round,
+      category: currentCategory,
+      target,
+      itemClicked: item.name,
+      correct: isTarget,
+      difficulty,
+      responseTimeMs: Date.now() - roundStartRef.current,
+    }]);
+
     if (isTarget) {
       playSound('correct');
       setScore(score + 1);
       setMessage('Great job! ✅');
-      
+
       setTimeout(() => {
         if (round < totalRounds) {
           setRound(prevRound => prevRound + 1); // FIX: Use functional update
@@ -145,7 +174,7 @@ const SortByCategories: React.FC = () => {
     } else {
       playSound('incorrect');
       setMessage('Try again! Look for the ' + target);
-      
+
       const originalItems = [...items];
       setItems([]);
       setTimeout(() => setItems(originalItems), 500);
@@ -154,18 +183,10 @@ const SortByCategories: React.FC = () => {
 
   // Sound effects
   const playSound = (type: 'correct' | 'incorrect' | 'celebration') => {
-    try {
-      if (type === 'correct') {
-        const audio = new Audio('/sounds/coin.mp3');
-        audio.volume = 0.3;
-        audio.play().catch(() => {}); // Silently fail if audio can't play
-      } else if (type === 'celebration') {
-        const audio = new Audio('/sounds/celebration.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => {});
-      }
-    } catch (error) {
-      // Silently fail
+    if (type === 'correct') {
+      playAudioFile('/sounds/coin.mp3', 0.3);
+    } else if (type === 'celebration') {
+      playAudioFile('/sounds/celebration.mp3', 0.5);
     }
   };
 
@@ -175,7 +196,24 @@ const SortByCategories: React.FC = () => {
     setRound(1);
     setGameComplete(false);
     setMessage('');
+    setTrials([]);
   };
+
+  // Trial-level summary for the clinician-facing review - distinct from
+  // `score`/`totalRounds`, which only count the final (eventually correct)
+  // response per round and ignore wrong attempts along the way.
+  const trialAccuracy = trials.length > 0
+    ? Math.round((trials.filter(t => t.correct).length / trials.length) * 100)
+    : 0;
+  const avgResponseTimeMs = trials.length > 0
+    ? Math.round(trials.reduce((sum, t) => sum + t.responseTimeMs, 0) / trials.length)
+    : 0;
+  const categoryBreakdown = trials.reduce<Record<string, { correct: number; total: number }>>((acc, t) => {
+    if (!acc[t.category]) acc[t.category] = { correct: 0, total: 0 };
+    acc[t.category].total += 1;
+    if (t.correct) acc[t.category].correct += 1;
+    return acc;
+  }, {});
 
   // Change difficulty
   const changeDifficulty = (newDifficulty: Difficulty) => {
@@ -317,6 +355,21 @@ const SortByCategories: React.FC = () => {
             <button onClick={resetGame} className="play-again-btn">
               🔄 Play Again
             </button>
+          </div>
+
+          <div className="clinician-summary">
+            <h3>💡 For Clinician Review</h3>
+            <p>
+              Trial-level accuracy: <strong>{trialAccuracy}%</strong> ({trials.filter(t => t.correct).length}/{trials.length} responses)
+            </p>
+            <p>Average response time: <strong>{avgResponseTimeMs}ms</strong></p>
+            <ul>
+              {Object.entries(categoryBreakdown).map(([category, stats]) => (
+                <li key={category}>
+                  {category}: {stats.correct}/{stats.total} correct ({Math.round((stats.correct / stats.total) * 100)}%)
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       ) : (

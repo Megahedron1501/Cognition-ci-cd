@@ -8,10 +8,12 @@ import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBui
 import SortByCategories from './games/SortByCategories';
 import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
+import { isSoundEnabled, setSoundEnabled } from './utils/sound';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
   const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard'>('tokenBoard');
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   if (!hasLaunched) {
     return <LaunchScreen onLaunch={() => setHasLaunched(true)} />;
@@ -23,6 +25,16 @@ function App() {
       <div style={styles.header}>
         <h1 style={styles.title}>🧠 Cognition ABA Tools</h1>
         <p style={styles.subtitle}>Professional digital tools for ABA therapy sessions</p>
+        <button
+          onClick={() => {
+            const next = !soundOn;
+            setSoundEnabled(next);
+            setSoundOn(next);
+          }}
+          style={styles.soundToggleButton}
+        >
+          {soundOn ? '🔊 Sound On' : '🔇 Sound Off'}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -121,6 +133,17 @@ const styles = {
   subtitle: {
     color: '#7F8C8D',
     fontSize: '1.1rem',
+  },
+  soundToggleButton: {
+    marginTop: '10px',
+    padding: '8px 16px',
+    fontSize: '0.95rem',
+    fontWeight: 'bold' as const,
+    color: '#2C3E50',
+    backgroundColor: '#ECF0F1',
+    border: '2px solid #BDC3C7',
+    borderRadius: '8px',
+    cursor: 'pointer',
   },
   navigation: {
     display: 'flex',

@@ -7,6 +7,7 @@ import {
   createIntervalSequence,
   describeSchedule,
 } from '../../types/reinforcementSchedule';
+import { playSound } from '../../utils/sound';
 
 // 👇 UPDATE THE INTERFACE - Add onAllTokensEarned
 interface TokenBoardProps {
@@ -108,15 +109,7 @@ const TokenBoard: React.FC<TokenBoardProps> = ({
       const newTokens = tokens + 1;
       setTokens(newTokens);
 
-      // SIMPLE SOUND PLAYER
-      try {
-        const sound = new Audio('/sounds/coin.mp3');
-        sound.volume = 0.5; // 50% volume
-        sound.play();
-        console.log("🎵 Playing coin sound!");
-      } catch (error) {
-        console.log("Couldn't play sound:", error);
-      }
+      playSound('/sounds/coin.mp3', 0.5);
 
       // 👇 NEW: Check if we reached max tokens and trigger callback
       if (newTokens >= totalTokens && onAllTokensEarned) {
@@ -324,17 +317,6 @@ const TokenBoard: React.FC<TokenBoardProps> = ({
           className="reset-button"
         >
           🔄 Reset Board
-        </button>
-
-        {/* TEMPORARY TEST BUTTON - Remove this after testing */}
-        <button
-          onClick={() => {
-            console.log("🔊 Testing sound directly...");
-            new Audio('/sounds/coin.mp3').play();
-          }}
-          className="test-sound-button"
-        >
-          🔊 Test Sound
         </button>
       </div>
       <p className="button-explainer">

@@ -152,7 +152,7 @@
 
 .add-token-button,
 .reset-button,
-.test-sound-button {
+.record-response-button {
   padding: 15px 30px;
   font-size: 1.2rem;
   font-weight: bold;
@@ -166,16 +166,12 @@
 
 .add-token-button:hover,
 .reset-button:hover,
-.test-sound-button:hover {
+.record-response-button:hover {
   transform: translateY(-2px);
 }
 
 .reset-button {
   background-color: #F44336;
-}
-
-.test-sound-button {
-  background-color: purple;
 }
 
 .celebration-message {
