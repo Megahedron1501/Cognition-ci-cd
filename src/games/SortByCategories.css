@@ -180,18 +180,6 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.game-item.target {
-  border-color: #28a745;
-  box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 10px rgba(40, 167, 69, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.8); }
-  100% { box-shadow: 0 0 10px rgba(40, 167, 69, 0.5); }
-}
-
 .color-item {
   /* Colors are set via inline style */
 }
@@ -288,6 +276,83 @@
 .clinician-summary ul {
   margin: 10px 0 0;
   padding-left: 20px;
+}
+
+.clinician-summary h4 {
+  margin: 18px 0 0;
+  color: #0c5460;
+}
+
+.trial-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.trial-table th,
+.trial-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #bbdefb;
+  text-align: center;
+}
+
+/* Prompt level selector - collapsed by default so it stays out of the way
+   for anyone who isn't tracking prompts. */
+.prompt-panel-wrapper {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.prompt-toggle-button {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background-color: #ECF0F1;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.prompt-panel {
+  max-width: 420px;
+  margin: 10px auto 0;
+  padding: 15px;
+  background-color: #FDF6E3;
+  border: 2px solid #E8DCB5;
+  border-radius: 10px;
+}
+
+.prompt-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.prompt-btn {
+  min-width: 48px;
+  padding: 8px 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background: white;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.prompt-btn.active {
+  color: white;
+  background: #2196f3;
+  border-color: #1976d2;
+}
+
+.prompt-note {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #7F8C8D;
 }
 
 /* Responsive adjustments */

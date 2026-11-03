@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SortByCategories.css';
 import { playSound as playAudioFile } from '../utils/sound';
+import {
+  PromptLevel,
+  PROMPT_LEVELS,
+  DEFAULT_PROMPT_LEVEL,
+  promptLabel,
+} from '../types/promptLevel';
 
 type Category = 'color' | 'shape' | 'animal' | 'food' | 'clothing';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -23,7 +29,8 @@ interface Trial {
   category: Category;
   target: string;
   itemClicked: string; // first response
-  correct: boolean; // first response was correct (independent)
+  correct: boolean; // first response was correct (at whatever prompt level)
+  promptLevel: PromptLevel; // prompt in effect at the first response
   difficulty: Difficulty;
   responseTimeMs: number; // latency to first response
   attempts: number; // total clicks until the correct item, including the first
@@ -77,6 +84,12 @@ const SortByCategories: React.FC = () => {
   // and whether the round is finished (correct item found, waiting to advance).
   const trialRecordedRef = useRef(false);
   const roundResolvedRef = useRef(false);
+
+  // Prompt level the clinician is currently delivering. Sticky across trials
+  // (prompts usually change gradually), and defaults to Independent so
+  // anyone who never opens the panel gets accurate unprompted data.
+  const [promptLevel, setPromptLevel] = useState<PromptLevel>(DEFAULT_PROMPT_LEVEL);
+  const [showPromptPanel, setShowPromptPanel] = useState(false);
 
   // Initialize a new round - FIXED with useCallback and proper dependencies
   const startNewRound = useCallback(() => {
@@ -168,6 +181,7 @@ const SortByCategories: React.FC = () => {
         target,
         itemClicked: item.name,
         correct: isTarget,
+        promptLevel,
         difficulty,
         responseTimeMs: Date.now() - roundStartRef.current,
         attempts: 1,
@@ -223,18 +237,24 @@ const SortByCategories: React.FC = () => {
   // Trial-level summary for the clinician-facing review - distinct from
   // `score`/`totalRounds`, which only count the final (eventually correct)
   // response per round and ignore wrong attempts along the way.
-  const independentCorrect = trials.filter(t => t.correct).length;
+  // Only a correct first response with no prompt counts as independent.
+  const isIndependentCorrect = (t: Trial) => t.correct && t.promptLevel === 'I';
+  const independentCorrect = trials.filter(isIndependentCorrect).length;
+  const promptedCorrect = trials.filter(t => t.correct && t.promptLevel !== 'I').length;
   const trialAccuracy = trials.length > 0
     ? Math.round((independentCorrect / trials.length) * 100)
     : 0;
   const errorCorrectionTrials = trials.filter(t => !t.correct).length;
+  const promptLevelCounts = PROMPT_LEVELS
+    .map(({ code, label }) => ({ code, label, count: trials.filter(t => t.promptLevel === code).length }))
+    .filter(p => p.count > 0);
   const avgResponseTimeMs = trials.length > 0
     ? Math.round(trials.reduce((sum, t) => sum + t.responseTimeMs, 0) / trials.length)
     : 0;
   const categoryBreakdown = trials.reduce<Record<string, { correct: number; total: number }>>((acc, t) => {
     if (!acc[t.category]) acc[t.category] = { correct: 0, total: 0 };
     acc[t.category].total += 1;
-    if (t.correct) acc[t.category].correct += 1;
+    if (isIndependentCorrect(t)) acc[t.category].correct += 1;
     return acc;
   }, {});
 
@@ -272,14 +292,14 @@ const SortByCategories: React.FC = () => {
   };
 
   // Render item based on category
+  // No visual marking of the correct item - that would be a built-in
+  // stimulus prompt on every trial and invalidate "Independent" data.
   const renderItem = (item: GameItem) => {
-    const isTarget = targetItems.some(t => t.id === item.id);
-    
     switch (currentCategory) {
       case 'color':
         return (
           <div 
-            className={`game-item color-item ${isTarget ? 'target' : ''}`}
+            className="game-item color-item"
             style={{ backgroundColor: item.color }}
             title={item.name}
           >
@@ -290,7 +310,7 @@ const SortByCategories: React.FC = () => {
       case 'shape':
         return (
           <div 
-            className={`game-item shape-item ${isTarget ? 'target' : ''}`}
+            className="game-item shape-item"
             style={{ 
               backgroundColor: item.color,
               clipPath: getShapeClipPath(item.shape || 'circle')
@@ -304,7 +324,7 @@ const SortByCategories: React.FC = () => {
       case 'animal':
         return (
           <div 
-            className={`game-item animal-item ${isTarget ? 'target' : ''}`}
+            className="game-item animal-item"
             style={{ backgroundColor: item.color }}
             title={item.name}
           >
@@ -345,6 +365,34 @@ const SortByCategories: React.FC = () => {
         </div>
       </div>
 
+      <div className="prompt-panel-wrapper">
+        <button
+          className="prompt-toggle-button"
+          onClick={() => setShowPromptPanel(!showPromptPanel)}
+        >
+          📋 Prompt Level: {promptLabel(promptLevel)}
+        </button>
+        {showPromptPanel && (
+          <div className="prompt-panel">
+            <div className="prompt-buttons">
+              {PROMPT_LEVELS.map(({ code, label }) => (
+                <button
+                  key={code}
+                  className={`prompt-btn ${promptLevel === code ? 'active' : ''}`}
+                  onClick={() => setPromptLevel(code)}
+                  title={label}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+            <p className="prompt-note">
+              Select the prompt you're giving before the learner responds. It stays selected until you change it.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="difficulty-selector">
         <h3>Difficulty:</h3>
         <div className="difficulty-buttons">
@@ -380,17 +428,53 @@ const SortByCategories: React.FC = () => {
           <div className="clinician-summary">
             <h3>💡 For Clinician Review</h3>
             <p>
-              First-response accuracy: <strong>{trialAccuracy}%</strong> ({independentCorrect}/{trials.length} trials correct independently)
+              Independent correct: <strong>{trialAccuracy}%</strong> ({independentCorrect}/{trials.length} trials)
             </p>
-            <p>Trials needing error correction: <strong>{errorCorrectionTrials}</strong></p>
+            <p>Prompted correct: <strong>{promptedCorrect}</strong></p>
+            <p>Incorrect first response (error correction): <strong>{errorCorrectionTrials}</strong></p>
             <p>Average latency to first response: <strong>{avgResponseTimeMs}ms</strong></p>
+
+            <h4>Trials by prompt level</h4>
+            <ul>
+              {promptLevelCounts.map(p => (
+                <li key={p.code}>{p.label} ({p.code}): {p.count}</li>
+              ))}
+            </ul>
+
+            <h4>Independent correct by category</h4>
             <ul>
               {Object.entries(categoryBreakdown).map(([category, stats]) => (
                 <li key={category}>
-                  {category}: {stats.correct}/{stats.total} correct ({Math.round((stats.correct / stats.total) * 100)}%)
+                  {category}: {stats.correct}/{stats.total} ({Math.round((stats.correct / stats.total) * 100)}%)
                 </li>
               ))}
             </ul>
+
+            <h4>Trial-by-trial</h4>
+            <table className="trial-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Target</th>
+                  <th>Prompt</th>
+                  <th>1st response</th>
+                  <th>Attempts</th>
+                  <th>Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trials.map(t => (
+                  <tr key={t.round}>
+                    <td>{t.round}</td>
+                    <td>{t.target}</td>
+                    <td>{t.promptLevel}</td>
+                    <td>{t.correct ? '+' : '−'}</td>
+                    <td>{t.attempts}</td>
+                    <td>{t.responseTimeMs}ms</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       ) : (
