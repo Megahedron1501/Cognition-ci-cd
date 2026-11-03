@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SortByCategories.css';
-import { playSound as playAudioFile } from '../utils/sound';
+import { playSound as playAudioFile, speak } from '../utils/sound';
 import {
   PromptLevel,
   PROMPT_LEVELS,
@@ -36,6 +36,30 @@ interface Trial {
   responseTimeMs: number; // latency to first response
   attempts: number; // total clicks until the correct item, including the first
   timestamp: number; // when the first response happened (epoch ms)
+  labelsShown: boolean; // text labels on the choices act as a textual prompt
+}
+
+// Targets per category. Each category draws from a shuffled bag so every
+// target comes up once before any repeats (balanced presentation), and the
+// same target is never presented twice in a row across a bag boundary.
+const TARGETS: Partial<Record<Category, string[]>> = {
+  color: ['red', 'blue', 'green', 'yellow'],
+  shape: ['circle', 'square', 'triangle', 'star'],
+  animal: ['Dog', 'Cat', 'Bird', 'Fish'],
+};
+
+function shuffle<T>(values: T[]): T[] {
+  const result = [...values];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// The instruction (SD), shown on screen and spoken aloud.
+function instructionFor(category: Category, target: string): string {
+  return category === 'color' ? `Touch the ${target} one` : `Touch the ${target}`;
 }
 
 // MOVE itemDatabase OUTSIDE the component
@@ -93,6 +117,28 @@ const SortByCategories: React.FC = () => {
   const [promptLevel, setPromptLevel] = useState<PromptLevel>(DEFAULT_PROMPT_LEVEL);
   const [showPromptPanel, setShowPromptPanel] = useState(false);
 
+  // Text labels on the choices let a reader match words instead of
+  // discriminating the stimulus, so they're off by default.
+  const [showLabels, setShowLabels] = useState(false);
+
+  const targetBagsRef = useRef<Partial<Record<Category, string[]>>>({});
+  const lastTargetRef = useRef<Partial<Record<Category, string>>>({});
+
+  const drawTarget = (category: Category): string => {
+    const pool = TARGETS[category] ?? [];
+    let bag = targetBagsRef.current[category] ?? [];
+    if (bag.length === 0) {
+      bag = shuffle(pool);
+      if (bag.length > 1 && bag[0] === lastTargetRef.current[category]) {
+        bag.push(bag.shift()!);
+      }
+    }
+    const next = bag.shift()!;
+    targetBagsRef.current[category] = bag;
+    lastTargetRef.current[category] = next;
+    return next;
+  };
+
   // Initialize a new round - FIXED with useCallback and proper dependencies
   const startNewRound = useCallback(() => {
     setMessage('');
@@ -106,16 +152,10 @@ const SortByCategories: React.FC = () => {
     
     switch (newCategory) {
       case 'color':
-        newTarget = ['red', 'blue', 'green', 'yellow'][Math.floor(Math.random() * 4)];
-        filteredItems = itemDatabase.filter(item => item.category === 'color');
-        break;
       case 'shape':
-        newTarget = ['circle', 'square', 'triangle', 'star'][Math.floor(Math.random() * 4)];
-        filteredItems = itemDatabase.filter(item => item.category === 'shape');
-        break;
       case 'animal':
-        newTarget = ['Dog', 'Cat', 'Bird', 'Fish'][Math.floor(Math.random() * 4)];
-        filteredItems = itemDatabase.filter(item => item.category === 'animal');
+        newTarget = drawTarget(newCategory);
+        filteredItems = itemDatabase.filter(item => item.category === newCategory);
         break;
       default:
         newTarget = 'red';
@@ -165,6 +205,9 @@ const SortByCategories: React.FC = () => {
     roundStartRef.current = Date.now();
     trialRecordedRef.current = false;
     roundResolvedRef.current = false;
+    speak(instructionFor(newCategory, newTarget));
+    // drawTarget only touches refs, so it's safe to leave out of the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round, difficulty]); // itemDatabase is outside, so not needed here
 
   // Handle item click - FIXED setRound with functional update
@@ -188,6 +231,7 @@ const SortByCategories: React.FC = () => {
         responseTimeMs: Date.now() - roundStartRef.current,
         attempts: 1,
         timestamp: Date.now(),
+        labelsShown: showLabels,
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -215,7 +259,11 @@ const SortByCategories: React.FC = () => {
 
       const originalItems = [...items];
       setItems([]);
-      setTimeout(() => setItems(originalItems), 500);
+      // Re-present the choices and the instruction for error correction.
+      setTimeout(() => {
+        setItems(originalItems);
+        speak(instructionFor(currentCategory, target));
+      }, 500);
     }
   };
 
@@ -248,6 +296,7 @@ const SortByCategories: React.FC = () => {
     ? Math.round((independentCorrect / trials.length) * 100)
     : 0;
   const errorCorrectionTrials = trials.filter(t => !t.correct).length;
+  const labeledTrials = trials.filter(t => t.labelsShown).length;
   const promptLevelCounts = PROMPT_LEVELS
     .map(({ code, label }) => ({ code, label, count: trials.filter(t => t.promptLevel === code).length }))
     .filter(p => p.count > 0);
@@ -267,6 +316,7 @@ const SortByCategories: React.FC = () => {
     const headers = [
       'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
       'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
+      'Labels Shown',
     ];
     // Local time, not UTC, so it matches the session clock when opened in Excel.
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -284,6 +334,7 @@ const SortByCategories: React.FC = () => {
       t.attempts,
       t.responseTimeMs,
       t.difficulty,
+      t.labelsShown ? 'Y' : 'N',
     ]);
     const start = new Date(trials[0]?.timestamp ?? Date.now());
     const stamp = `${localDate(start)}_${pad(start.getHours())}${pad(start.getMinutes())}`;
@@ -313,16 +364,6 @@ const SortByCategories: React.FC = () => {
     }
   };
 
-  // Get target display text
-  const getPromptText = () => {
-    switch (currentCategory) {
-      case 'color': return `Touch the ${target} one`;
-      case 'shape': return `Touch the ${target}`;
-      case 'animal': return `Touch the ${target}`;
-      default: return `Find the ${target}`;
-    }
-  };
-
   // Render item based on category
   // No visual marking of the correct item - that would be a built-in
   // stimulus prompt on every trial and invalidate "Independent" data.
@@ -333,9 +374,9 @@ const SortByCategories: React.FC = () => {
           <div 
             className="game-item color-item"
             style={{ backgroundColor: item.color }}
-            title={item.name}
+            title={showLabels ? item.name : undefined}
           >
-            <div className="item-label">{item.color.toUpperCase()}</div>
+            {showLabels && <div className="item-label">{item.color.toUpperCase()}</div>}
           </div>
         );
         
@@ -347,9 +388,9 @@ const SortByCategories: React.FC = () => {
               backgroundColor: item.color,
               clipPath: getShapeClipPath(item.shape || 'circle')
             }}
-            title={item.name}
+            title={showLabels ? item.name : undefined}
           >
-            <div className="item-label">{item.shape?.toUpperCase()}</div>
+            {showLabels && <div className="item-label">{item.shape?.toUpperCase()}</div>}
           </div>
         );
         
@@ -358,9 +399,9 @@ const SortByCategories: React.FC = () => {
           <div 
             className="game-item animal-item"
             style={{ backgroundColor: item.color }}
-            title={item.name}
+            title={showLabels ? item.name : undefined}
           >
-            <div className="item-label">{item.name.toUpperCase()}</div>
+            {showLabels && <div className="item-label">{item.name.toUpperCase()}</div>}
             <div className="animal-emoji">
               {item.name === 'Dog' ? '🐕' : 
                item.name === 'Cat' ? '🐈' : 
@@ -403,6 +444,13 @@ const SortByCategories: React.FC = () => {
           onClick={() => setShowPromptPanel(!showPromptPanel)}
         >
           📋 Prompt Level: {promptLabel(promptLevel)}
+        </button>
+        <button
+          className="prompt-toggle-button labels-toggle-button"
+          onClick={() => setShowLabels(!showLabels)}
+          title="Text labels let readers match words instead of the picture/color - recorded in the data when on"
+        >
+          🏷️ Text Labels: {showLabels ? 'On' : 'Off'}
         </button>
         {showPromptPanel && (
           <div className="prompt-panel">
@@ -465,6 +513,11 @@ const SortByCategories: React.FC = () => {
             <p>Prompted correct: <strong>{promptedCorrect}</strong></p>
             <p>Incorrect first response (error correction): <strong>{errorCorrectionTrials}</strong></p>
             <p>Average latency to first response: <strong>{avgResponseTimeMs}ms</strong></p>
+            {labeledTrials > 0 && (
+              <p className="labels-warning">
+                ⚠️ Text labels were on for {labeledTrials}/{trials.length} trials - the learner may have matched words rather than identifying the stimulus.
+              </p>
+            )}
 
             <h4>Trials by prompt level</h4>
             <ul>
@@ -516,7 +569,13 @@ const SortByCategories: React.FC = () => {
       ) : (
         <>
           <div className="game-prompt">
-            <h3>{getPromptText()}</h3>
+            <h3>{instructionFor(currentCategory, target)}</h3>
+            <button
+              className="say-again-btn"
+              onClick={() => speak(instructionFor(currentCategory, target))}
+            >
+              🔊 Say it again
+            </button>
             <div className="category-badge">
               Looking for: <strong>{target.toUpperCase()}</strong>
             </div>
