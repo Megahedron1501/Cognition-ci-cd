@@ -7,6 +7,7 @@ import {
   DEFAULT_PROMPT_LEVEL,
   promptLabel,
 } from '../types/promptLevel';
+import { toCsv, downloadCsv } from '../utils/csv';
 
 type Category = 'color' | 'shape' | 'animal' | 'food' | 'clothing';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -34,6 +35,7 @@ interface Trial {
   difficulty: Difficulty;
   responseTimeMs: number; // latency to first response
   attempts: number; // total clicks until the correct item, including the first
+  timestamp: number; // when the first response happened (epoch ms)
 }
 
 // MOVE itemDatabase OUTSIDE the component
@@ -185,6 +187,7 @@ const SortByCategories: React.FC = () => {
         difficulty,
         responseTimeMs: Date.now() - roundStartRef.current,
         attempts: 1,
+        timestamp: Date.now(),
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -257,6 +260,35 @@ const SortByCategories: React.FC = () => {
     if (isIndependentCorrect(t)) acc[t.category].correct += 1;
     return acc;
   }, {});
+
+  // Trial-by-trial export for the BCBA. Deliberately has no client name or
+  // other identifying info - the RBT files it under the client themselves.
+  const exportTrialsCsv = () => {
+    const headers = [
+      'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
+      'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
+    ];
+    // Local time, not UTC, so it matches the session clock when opened in Excel.
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const localTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const rows = trials.map(t => [
+      `${localDate(new Date(t.timestamp))} ${localTime(new Date(t.timestamp))}`,
+      t.round,
+      t.category,
+      t.target,
+      t.promptLevel,
+      t.itemClicked,
+      t.correct ? 'Y' : 'N',
+      isIndependentCorrect(t) ? 'Y' : 'N',
+      t.attempts,
+      t.responseTimeMs,
+      t.difficulty,
+    ]);
+    const start = new Date(trials[0]?.timestamp ?? Date.now());
+    const stamp = `${localDate(start)}_${pad(start.getHours())}${pad(start.getMinutes())}`;
+    downloadCsv(`sort-by-categories_${stamp}.csv`, toCsv(headers, rows));
+  };
 
   // Change difficulty
   const changeDifficulty = (newDifficulty: Difficulty) => {
@@ -475,6 +507,10 @@ const SortByCategories: React.FC = () => {
                 ))}
               </tbody>
             </table>
+
+            <button onClick={exportTrialsCsv} className="export-csv-btn">
+              ⬇️ Download CSV
+            </button>
           </div>
         </div>
       ) : (

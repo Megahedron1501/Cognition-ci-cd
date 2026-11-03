@@ -297,6 +297,19 @@
   text-align: center;
 }
 
+.export-csv-btn {
+  display: block;
+  margin: 15px auto 0;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: white;
+  background: #2196f3;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 /* Prompt level selector - collapsed by default so it stays out of the way
    for anyone who isn't tracking prompts. */
 .prompt-panel-wrapper {
