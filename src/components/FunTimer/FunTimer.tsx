@@ -30,7 +30,7 @@ const THEMES: { id: ThemeId; emoji: string; label: string }[] = [
   { id: 'pie', emoji: '🥧', label: 'Pie' },
 ];
 
-const PRESET_MINUTES = [1, 2, 3, 5, 10, 15];
+const MAX_PICKER_MINUTES = 60;
 const BUBBLE_COUNT = 12;
 const WARNING_MS = 60000;
 
@@ -114,6 +114,7 @@ const FunTimer: React.FC = () => {
     }
   };
 
+  const chosenMinutes = Math.floor(chosenMs / 60000);
   const progress = totalMs > 0 ? 1 - remainingMs / totalMs : 0;
   const journey = JOURNEYS[theme];
   const poppedBubbles = status === 'done' ? BUBBLE_COUNT : Math.floor(progress * BUBBLE_COUNT);
@@ -185,16 +186,32 @@ const FunTimer: React.FC = () => {
       </div>
 
       {!locked && status !== 'done' && (
-        <div className="preset-row">
-          {PRESET_MINUTES.map(minutes => (
-            <button
-              key={minutes}
-              className={`preset-btn ${chosenMs === minutes * 60000 ? 'active' : ''}`}
-              onClick={() => setDuration(minutes * 60000)}
-            >
-              {minutes} min
-            </button>
-          ))}
+        <div className="minute-picker">
+          <button
+            className="minute-step-btn"
+            onClick={() => setDuration((chosenMinutes - 1) * 60000)}
+            disabled={chosenMinutes <= 1}
+            aria-label="One minute less"
+          >
+            −
+          </button>
+          <input
+            className="minute-slider"
+            type="range"
+            min={1}
+            max={MAX_PICKER_MINUTES}
+            value={Math.min(Math.max(chosenMinutes, 1), MAX_PICKER_MINUTES)}
+            onChange={e => setDuration(Number(e.target.value) * 60000)}
+            aria-label="Minutes"
+          />
+          <button
+            className="minute-step-btn"
+            onClick={() => setDuration((chosenMinutes + 1) * 60000)}
+            disabled={chosenMinutes >= MAX_PICKER_MINUTES}
+            aria-label="One minute more"
+          >
+            +
+          </button>
         </div>
       )}
 

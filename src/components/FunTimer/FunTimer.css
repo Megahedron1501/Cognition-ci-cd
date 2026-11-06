@@ -198,26 +198,40 @@
   border-radius: 8px;
 }
 
-.preset-row {
+.minute-picker {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 18px;
+  align-items: center;
+  gap: 14px;
+  max-width: 520px;
+  margin: 18px auto 0;
 }
 
-.preset-btn {
-  padding: 10px 16px;
-  font-size: 1rem;
+.minute-step-btn {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  font-size: 2.2rem;
   font-weight: bold;
+  line-height: 1;
   color: white;
-  background: #6C757D;
+  background: #2196F3;
   border: none;
-  border-radius: 8px;
+  border-radius: 50%;
+  touch-action: manipulation; /* no double-tap zoom when tapping repeatedly */
 }
 
-.preset-btn.active {
-  background: #2196F3;
+.minute-step-btn:disabled {
+  background: #BDC3C7;
+  cursor: not-allowed;
+}
+
+.minute-slider {
+  flex: 1;
+  min-width: 0;
+  height: 40px; /* a bigger touch area for small fingers */
+  accent-color: #2196F3;
+  cursor: pointer;
 }
 
 .timer-settings-toggle {
