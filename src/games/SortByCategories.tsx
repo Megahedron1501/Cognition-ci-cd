@@ -8,12 +8,18 @@ import {
   promptLabel,
 } from '../types/promptLevel';
 import { toCsv, downloadCsv } from '../utils/csv';
+import { TRIAL_CSV_HEADERS, trialCsvRow, fileStamp } from '../utils/sessionCsv';
+import { isIndependentCorrect, percentIndependent, targetsMeetingCriterion } from '../utils/mastery';
+import {
+  createId, deleteProgram, getProgram, getSessions, markTargetMastered, saveProgram, saveSession,
+} from '../utils/sessionStore';
+import { Category, Difficulty, Program, Trial } from '../types/session';
+import { buildTargetBag, shuffle } from '../utils/targetRotation';
+import ProgramSettings from './ProgramSettings';
 
-type Category = 'color' | 'shape' | 'animal' | 'size' | 'food' | 'clothing';
 // Which categories a session runs: one on its own, or the mixed rotation.
 type CategoryMode = 'mixed' | 'color' | 'shape' | 'animal' | 'size';
 type SizeClass = 'small' | 'medium' | 'big';
-type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface GameItem {
   id: number;
@@ -26,30 +32,11 @@ interface GameItem {
   sizeClass?: SizeClass; // size items only
 }
 
-// One DTT-style trial per round, scored on the FIRST response only. Clicks
-// after an error are error correction, not new trials - they're counted in
-// `attempts` but never change `correct`. This is invisible to the player -
-// it only surfaces in the clinician-facing summary once the session ends.
-interface Trial {
-  round: number;
-  category: Category;
-  target: string;
-  itemClicked: string; // first response
-  correct: boolean; // first response was correct (at whatever prompt level)
-  promptLevel: PromptLevel; // prompt in effect at the first response
-  difficulty: Difficulty;
-  responseTimeMs: number; // latency to first response
-  attempts: number; // total clicks until the correct item, including the first
-  timestamp: number; // when the first response happened (epoch ms)
-  labelsShown: boolean; // text labels on the choices act as a textual prompt
-  fieldSize: number; // how many choices were on screen
-  instructionSpoken: boolean; // app spoke before the first response; false means the clinician gave it
-}
+const DEFAULT_ROUNDS = 10;
 
-// Targets per category. Each category draws from a shuffled bag so every
-// target comes up once before any repeats (balanced presentation), and the
-// same target is never presented twice in a row across a bag boundary.
-const TARGETS: Partial<Record<Category, string[]>> = {
+// Targets per category. Each category draws from a balanced, shuffled bag;
+// see utils/targetRotation.ts for how the order stays unpredictable.
+const TARGETS: Record<Category, string[]> = {
   color: ['red', 'blue', 'green', 'yellow', 'orange', 'purple'],
   shape: ['circle', 'square', 'triangle', 'star', 'heart', 'rectangle', 'oval'],
   animal: ['Dog', 'Cat', 'Bird', 'Fish'],
@@ -83,21 +70,14 @@ const SIZE_OBJECTS = [
   { name: 'Flower', emoji: '🌸' },
 ];
 
-function shuffle<T>(values: T[]): T[] {
-  const result = [...values];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
 // Exactly one correct answer per trial: one tile per size class, in random
 // positions so size never correlates with where the tile sits. Easy is
 // small vs. big; medium adds a middle size; hard also uses a different object
 // per tile, so the learner has to attend to size and ignore what the object is.
-function buildSizeItems(difficulty: Difficulty): GameItem[] {
-  const classes: SizeClass[] = difficulty === 'easy' ? ['small', 'big'] : ['small', 'medium', 'big'];
+function buildSizeItems(difficulty: Difficulty, target: string): GameItem[] {
+  // A program can teach "medium" on Easy, which needs the middle size on screen.
+  const needsMedium = difficulty !== 'easy' || SIZE_CLASS_FOR_WORD[target] === 'medium';
+  const classes: SizeClass[] = needsMedium ? ['small', 'medium', 'big'] : ['small', 'big'];
   const objects = shuffle(SIZE_OBJECTS);
   return shuffle(classes).map((sizeClass, i) => {
     const object = difficulty === 'hard' ? objects[i] : objects[0];
@@ -172,11 +152,15 @@ const ShapeIcon: React.FC<{ shape: string; color: string }> = ({ shape, color })
   );
 };
 
-const SortByCategories: React.FC = () => {
+interface SortByCategoriesProps {
+  clientId?: string | null;
+  clientCode?: string | null;
+}
+
+const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, clientCode = null }) => {
   // Game state
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
-  const [totalRounds] = useState(10);
   const [message, setMessage] = useState('');
   const [gameComplete, setGameComplete] = useState(false);
   
@@ -185,6 +169,13 @@ const SortByCategories: React.FC = () => {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [categoryMode, setCategoryMode] = useState<CategoryMode>('mixed');
   const [target, setTarget] = useState('');
+
+  // The client's program for this category, if one is set up. It decides the
+  // targets, difficulty, and number of trials, so a parent or anyone without
+  // a program still gets the plain game.
+  const [program, setProgram] = useState<Program | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const totalRounds = program ? program.trialsPerSession : DEFAULT_ROUNDS;
   
   // Game items
   const [items, setItems] = useState<GameItem[]>([]);
@@ -192,6 +183,40 @@ const SortByCategories: React.FC = () => {
 
   // Trial-by-trial data, for the clinician-facing summary only.
   const [trials, setTrials] = useState<Trial[]>([]);
+
+  // Sessions save automatically to the selected client. Refs hold the latest
+  // values so a session can still be saved while this tool is being closed.
+  const [saveState, setSaveState] = useState<'unsaved' | 'saved' | 'failed'>('unsaved');
+  const [readyTargets, setReadyTargets] = useState<string[]>([]);
+  const savedRef = useRef(false);
+  const trialsRef = useRef(trials);
+  trialsRef.current = trials;
+  const totalRoundsRef = useRef(totalRounds);
+  totalRoundsRef.current = totalRounds;
+  const clientIdRef = useRef(clientId);
+  clientIdRef.current = clientId;
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPendingTimer = () => {
+    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+    pendingTimerRef.current = null;
+  };
+
+  const persistSession = (forClientId: string | null) => {
+    const sessionTrials = trialsRef.current;
+    if (savedRef.current || !forClientId || sessionTrials.length === 0) return;
+    savedRef.current = true;
+    const ok = saveSession({
+      id: createId(),
+      clientId: forClientId,
+      tool: 'sortByCategories',
+      startedAt: sessionTrials[0].timestamp,
+      endedAt: Date.now(),
+      completed: sessionTrials.length >= totalRoundsRef.current,
+      trials: sessionTrials,
+    });
+    setSaveState(ok ? 'saved' : 'failed');
+  };
   const roundStartRef = useRef<number>(Date.now());
   // Whether this round's trial has already been recorded (first response in),
   // and whether the round is finished (correct item found, waiting to advance).
@@ -231,20 +256,16 @@ const SortByCategories: React.FC = () => {
   };
 
   const targetBagsRef = useRef<Partial<Record<Category, string[]>>>({});
-  const lastTargetRef = useRef<Partial<Record<Category, string>>>({});
+  const recentTargetsRef = useRef<Partial<Record<Category, string[]>>>({});
 
   const drawTarget = (category: Category, pool: string[]): string => {
     // The pool can shrink between rounds (no "medium" on Easy sizes).
     let bag = (targetBagsRef.current[category] ?? []).filter(t => pool.includes(t));
-    if (bag.length === 0) {
-      bag = shuffle(pool);
-      if (bag.length > 1 && bag[0] === lastTargetRef.current[category]) {
-        bag.push(bag.shift()!);
-      }
-    }
+    const recent = recentTargetsRef.current[category] ?? [];
+    if (bag.length === 0) bag = buildTargetBag(pool, recent);
     const next = bag.shift()!;
     targetBagsRef.current[category] = bag;
-    lastTargetRef.current[category] = next;
+    recentTargetsRef.current[category] = [...recent, next].slice(-2);
     return next;
   };
 
@@ -258,15 +279,16 @@ const SortByCategories: React.FC = () => {
     const newCategory = categories[(round - 1) % categories.length];
     setCurrentCategory(newCategory);
 
-    const pool = (TARGETS[newCategory] ?? []).filter(t =>
-      !(newCategory === 'size' && difficulty === 'easy' && t === 'medium')
-    );
+    const programPool = program?.targets.filter(t => t.status !== 'onHold').map(t => t.word) ?? [];
+    const pool = programPool.length > 0
+      ? programPool
+      : TARGETS[newCategory].filter(t => !(newCategory === 'size' && difficulty === 'easy' && t === 'medium'));
     const newTarget = drawTarget(newCategory, pool);
     setTarget(newTarget);
 
     let selectedItems: GameItem[];
     if (newCategory === 'size') {
-      selectedItems = buildSizeItems(difficulty);
+      selectedItems = buildSizeItems(difficulty, newTarget);
     } else {
       const filteredItems = itemDatabase.filter(item => item.category === newCategory);
 
@@ -297,7 +319,7 @@ const SortByCategories: React.FC = () => {
     sayInstruction(newCategory, newTarget);
     // drawTarget and sayInstruction only touch refs, so they're safe to leave out of the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, difficulty, categoryMode]); // itemDatabase is outside, so not needed here
+  }, [round, difficulty, categoryMode, program]); // itemDatabase is outside, so not needed here
 
   // Handle item click - FIXED setRound with functional update
   const handleItemClick = (item: GameItem) => {
@@ -323,6 +345,7 @@ const SortByCategories: React.FC = () => {
         labelsShown: showLabels,
         fieldSize: items.length,
         instructionSpoken: spokenThisTrialRef.current,
+        programId: program?.id,
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -336,7 +359,7 @@ const SortByCategories: React.FC = () => {
       setScore(score + 1);
       setMessage('Great job! ✅');
 
-      setTimeout(() => {
+      pendingTimerRef.current = setTimeout(() => {
         if (round < totalRounds) {
           setRound(prevRound => prevRound + 1); // FIX: Use functional update
         } else {
@@ -351,7 +374,7 @@ const SortByCategories: React.FC = () => {
       const originalItems = [...items];
       setItems([]);
       // Re-present the choices and the instruction for error correction.
-      setTimeout(() => {
+      pendingTimerRef.current = setTimeout(() => {
         setItems(originalItems);
         sayInstruction(currentCategory, target);
       }, 500);
@@ -369,6 +392,12 @@ const SortByCategories: React.FC = () => {
 
   // Reset game
   const resetGame = () => {
+    clearPendingTimer();
+    persistSession(clientIdRef.current); // never lose trials already collected
+    savedRef.current = false;
+    setSaveState('unsaved');
+    setReadyTargets([]);
+    targetBagsRef.current = {}; // start each session with a full, even rotation
     setScore(0);
     setRound(1);
     setGameComplete(false);
@@ -379,13 +408,9 @@ const SortByCategories: React.FC = () => {
   // Trial-level summary for the clinician-facing review - distinct from
   // `score`/`totalRounds`, which only count the final (eventually correct)
   // response per round and ignore wrong attempts along the way.
-  // Only a correct first response with no prompt counts as independent.
-  const isIndependentCorrect = (t: Trial) => t.correct && t.promptLevel === 'I';
   const independentCorrect = trials.filter(isIndependentCorrect).length;
-  const promptedCorrect = trials.filter(t => t.correct && t.promptLevel !== 'I').length;
-  const trialAccuracy = trials.length > 0
-    ? Math.round((independentCorrect / trials.length) * 100)
-    : 0;
+  const promptedCorrect = trials.filter(t => t.correct && !isIndependentCorrect(t)).length;
+  const trialAccuracy = percentIndependent(trials);
   const errorCorrectionTrials = trials.filter(t => !t.correct).length;
   const labeledTrials = trials.filter(t => t.labelsShown).length;
   const promptLevelCounts = PROMPT_LEVELS
@@ -404,34 +429,8 @@ const SortByCategories: React.FC = () => {
   // Trial-by-trial export for the BCBA. Deliberately has no client name or
   // other identifying info - the RBT files it under the client themselves.
   const exportTrialsCsv = () => {
-    const headers = [
-      'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
-      'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
-      'Labels Shown', 'Choices', 'Instruction Spoken',
-    ];
-    // Local time, not UTC, so it matches the session clock when opened in Excel.
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const localTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    const rows = trials.map(t => [
-      `${localDate(new Date(t.timestamp))} ${localTime(new Date(t.timestamp))}`,
-      t.round,
-      t.category,
-      t.target,
-      t.promptLevel,
-      t.itemClicked,
-      t.correct ? 'Y' : 'N',
-      isIndependentCorrect(t) ? 'Y' : 'N',
-      t.attempts,
-      t.responseTimeMs,
-      t.difficulty,
-      t.labelsShown ? 'Y' : 'N',
-      t.fieldSize,
-      t.instructionSpoken ? 'Y' : 'N',
-    ]);
     const start = new Date(trials[0]?.timestamp ?? Date.now());
-    const stamp = `${localDate(start)}_${pad(start.getHours())}${pad(start.getMinutes())}`;
-    downloadCsv(`sort-by-categories_${stamp}.csv`, toCsv(headers, rows));
+    downloadCsv(`sort-by-categories_${fileStamp(start)}.csv`, toCsv(TRIAL_CSV_HEADERS, trials.map(trialCsvRow)));
   };
 
   // Change difficulty
@@ -444,6 +443,72 @@ const SortByCategories: React.FC = () => {
     setCategoryMode(newMode);
     resetGame();
   };
+
+  const endSessionEarly = () => {
+    clearPendingTimer();
+    roundResolvedRef.current = true;
+    setGameComplete(true);
+  };
+
+  const handleProgramSave = (updated: Program) => {
+    resetGame();
+    if (saveProgram(updated)) {
+      setProgram(updated);
+      setDifficulty(updated.difficulty);
+      setShowSettings(false);
+    } else {
+      setSaveState('failed');
+    }
+  };
+
+  const handleProgramRemove = (programId: string) => {
+    resetGame();
+    if (deleteProgram(programId)) {
+      setProgram(null);
+      setShowSettings(false);
+    }
+  };
+
+  const handleMarkMastered = (word: string) => {
+    if (!program) return;
+    const updated = markTargetMastered(program, word);
+    if (updated) setProgram(updated);
+  };
+
+  // Load the program for this client and category.
+  useEffect(() => {
+    const loaded = clientId && categoryMode !== 'mixed' ? getProgram(clientId, categoryMode) : null;
+    setProgram(loaded);
+    if (loaded) setDifficulty(loaded.difficulty);
+  }, [clientId, categoryMode]);
+
+  // Save a finished session and check mastery. Running on clientId too means a
+  // session finished with no client selected saves as soon as one is picked.
+  useEffect(() => {
+    if (!gameComplete || !clientId) return;
+    persistSession(clientId);
+    if (program) setReadyTargets(targetsMeetingCriterion(program, getSessions(clientId)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameComplete, clientId, program]);
+
+  // Switching clients saves what the previous client did, then starts fresh.
+  const previousClientRef = useRef(clientId);
+  useEffect(() => {
+    const previous = previousClientRef.current;
+    previousClientRef.current = clientId;
+    if (previous && previous !== clientId) {
+      persistSession(previous);
+      resetGame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
+
+  // Leaving this tool mid-session still saves the trials collected so far.
+  useEffect(() => () => {
+    clearPendingTimer();
+    persistSession(clientIdRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Initialize on component mount and round change - FIXED
   useEffect(() => {
@@ -559,6 +624,12 @@ const SortByCategories: React.FC = () => {
         >
           {instructionSpoken ? '🗣️ Spoken Instruction: On' : '🔇 Spoken Instruction: Off'}
         </button>
+        <button
+          className="prompt-toggle-button labels-toggle-button"
+          onClick={() => setShowSettings(!showSettings)}
+        >
+          ⚙️ Settings
+        </button>
         {showPromptPanel && (
           <div className="prompt-panel">
             <div className="prompt-buttons">
@@ -580,6 +651,28 @@ const SortByCategories: React.FC = () => {
         )}
       </div>
 
+      {showSettings && (
+        <ProgramSettings
+          key={`${clientId}-${categoryMode}-${program?.id}`}
+          clientId={clientId}
+          clientCode={clientCode}
+          category={categoryMode === 'mixed' ? null : categoryMode}
+          allTargets={categoryMode === 'mixed' ? [] : TARGETS[categoryMode]}
+          program={program}
+          currentDifficulty={difficulty}
+          onSave={handleProgramSave}
+          onRemove={handleProgramRemove}
+        />
+      )}
+
+      {program && (
+        <div className="program-badge">
+          📋 Program for <strong>{clientCode}</strong>:{' '}
+          {program.targets.filter(t => t.status !== 'onHold').map(t => t.word).join(', ')}
+          {' '}· {program.trialsPerSession} trials · mastery at {program.criterion.percent}% across {program.criterion.sessions} sessions
+        </div>
+      )}
+
       <div className="difficulty-selector">
         <h3>Sort by:</h3>
         <div className="difficulty-buttons">
@@ -600,12 +693,14 @@ const SortByCategories: React.FC = () => {
               key={level}
               className={`difficulty-btn ${difficulty === level ? 'active' : ''}`}
               onClick={() => changeDifficulty(level)}
+              disabled={!!program}
             >
               {level.toUpperCase()}
             </button>
           ))}
         </div>
         <div className="difficulty-info">
+          {program && 'Set by the program. '}
           {categoryMode === 'size' ? (
             <>
               {difficulty === 'easy' && '2 sizes, same picture'}
@@ -627,7 +722,7 @@ const SortByCategories: React.FC = () => {
           <div className="celebration">
             <h2>🎉 GAME COMPLETE! 🎉</h2>
             <div className="final-score">
-              You scored <strong>{score}</strong> out of <strong>{totalRounds}</strong>!
+              You scored <strong>{score}</strong> out of <strong>{trials.length}</strong>!
             </div>
             <button onClick={resetGame} className="play-again-btn">
               🔄 Play Again
@@ -636,6 +731,23 @@ const SortByCategories: React.FC = () => {
 
           <div className="clinician-summary">
             <h3>💡 For Clinician Review</h3>
+            {saveState === 'saved' && <p className="save-status saved">✅ Saved to client <strong>{clientCode}</strong>. See it under 📈 Progress.</p>}
+            {saveState === 'failed' && <p className="save-status failed">⚠️ This session couldn't be saved on this device. Download the CSV below to keep it.</p>}
+            {saveState === 'unsaved' && <p className="save-status">Not saved. Choose a client at the top of the page to save this session.</p>}
+
+            {readyTargets.length > 0 && program && (
+              <div className="mastery-flag">
+                <strong>🌟 Met the mastery criterion ({program.criterion.percent}% across {program.criterion.sessions} sessions):</strong>
+                {readyTargets.map(word => (
+                  <div key={word} className="mastery-row">
+                    {word}{' '}
+                    <button onClick={() => handleMarkMastered(word)}>Mark mastered</button>
+                  </div>
+                ))}
+                <p className="prompt-note">Marked targets move to maintenance and stay in rotation. This is your call; nothing changes until you mark it.</p>
+              </div>
+            )}
+
             <p>
               Independent correct: <strong>{trialAccuracy}%</strong> ({independentCorrect}/{trials.length} trials)
             </p>
@@ -733,6 +845,9 @@ const SortByCategories: React.FC = () => {
           <div className="instructions">
             <p>Click on the item that matches the category and target.</p>
             {categoryMode === 'mixed' && <p>Categories rotate each round: Color → Shape → Animal</p>}
+            {trials.length > 0 && (
+              <button className="end-early-btn" onClick={endSessionEarly}>⏹️ End session early</button>
+            )}
           </div>
         </>
       )}

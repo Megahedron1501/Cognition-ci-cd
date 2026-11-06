@@ -1,0 +1,55 @@
+.client-picker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: #2C3E50;
+  font-weight: bold;
+}
+
+.client-picker select,
+.client-picker input {
+  padding: 6px;
+  font-size: 0.95rem;
+}
+
+.client-picker input {
+  width: 130px;
+}
+
+.client-picker button {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background: #ECF0F1;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.client-add-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.client-note,
+.client-error {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.client-note {
+  color: #7F8C8D;
+}
+
+.client-error {
+  color: #C0392B;
+}

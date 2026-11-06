@@ -337,6 +337,140 @@
   cursor: pointer;
 }
 
+.save-status {
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: #eceff1;
+  font-size: 0.9rem;
+}
+
+.save-status.saved {
+  background: #d4edda;
+}
+
+.save-status.failed {
+  background: #f8d7da;
+}
+
+.mastery-flag {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+}
+
+.mastery-row {
+  margin-top: 6px;
+  text-transform: capitalize;
+}
+
+.mastery-row button,
+.end-early-btn {
+  padding: 5px 12px;
+  font-weight: bold;
+  color: #2C3E50;
+  background: white;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.program-badge {
+  max-width: 700px;
+  margin: 0 auto 15px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #2C3E50;
+  background: #E3F2FD;
+  border-radius: 8px;
+}
+
+.difficulty-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Program settings */
+.program-settings {
+  max-width: 560px;
+  margin: 0 auto 15px;
+  padding: 15px;
+  color: #2C3E50;
+  background: #FDF6E3;
+  border: 2px solid #E8DCB5;
+  border-radius: 10px;
+}
+
+.program-settings h3 {
+  margin: 0 0 10px;
+}
+
+.program-target-row,
+.program-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.program-target-row span {
+  text-transform: capitalize;
+}
+
+.program-settings select,
+.program-settings input {
+  padding: 5px;
+  font-size: 0.95rem;
+}
+
+.program-settings input {
+  width: 70px;
+}
+
+.program-settings hr {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid #E8DCB5;
+}
+
+.program-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.program-actions button {
+  padding: 8px 14px;
+  font-weight: bold;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.program-actions button.primary {
+  color: white;
+  background: #27AE60;
+  border-color: #27AE60;
+}
+
+.program-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.program-warning {
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: #fff3cd;
+  border-radius: 4px;
+}
+
 /* Prompt level selector - collapsed by default so it stays out of the way
    for anyone who isn't tracking prompts. */
 .prompt-panel-wrapper {

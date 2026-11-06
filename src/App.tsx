@@ -10,11 +10,24 @@ import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
 import BehaviorTracker from './components/BehaviorTracker/BehaviorTracker';
 import FunTimer from './components/FunTimer/FunTimer';
+import Progress from './components/Progress/Progress';
+import ClientPicker from './components/ClientPicker/ClientPicker';
+import { getClients } from './utils/sessionStore';
+import { Client } from './types/session';
 import { isSoundEnabled, setSoundEnabled } from './utils/sound';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer' | 'progress'>('tokenBoard');
+  const [clients, setClients] = useState<Client[]>(() => getClients());
+  const [activeClientId, setActiveClientId] = useState<string | null>(null);
+  const activeClient = clients.find(c => c.id === activeClientId) ?? null;
+
+  const refreshClients = () => {
+    const latest = getClients();
+    setClients(latest);
+    if (!latest.some(c => c.id === activeClientId)) setActiveClientId(null);
+  };
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   if (!hasLaunched) {
@@ -37,6 +50,15 @@ function App() {
         >
           {soundOn ? '🔊 Sound On' : '🔇 Sound Off'}
         </button>
+        <ClientPicker
+          clients={clients}
+          activeClientId={activeClientId}
+          onSelect={setActiveClientId}
+          onClientAdded={client => {
+            setClients(getClients());
+            setActiveClientId(client.id);
+          }}
+        />
       </div>
 
       {/* Navigation */}
@@ -113,6 +135,15 @@ function App() {
         >
           ⏰ Fun Timer
         </button>
+        <button
+          onClick={() => setCurrentView('progress')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'progress' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          📈 Progress
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -126,7 +157,12 @@ function App() {
         {currentView === 'shapeGame' && <ShapeSorterGame />}
         {currentView === 'emotionGame' && <EmotionMatcherGame />}
         {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
-        {currentView === 'sortByCategories' && <SortByCategories />}
+        {currentView === 'sortByCategories' && (
+          <SortByCategories clientId={activeClientId} clientCode={activeClient?.code ?? null} />
+        )}
+        {currentView === 'progress' && (
+          <Progress clientId={activeClientId} clientCode={activeClient?.code ?? null} onDataChanged={refreshClients} />
+        )}
         {currentView === 'choiceBoard' && <ChoiceBoard />}
         {/* Always mounted, only hidden: behavior data runs all session
             alongside the other tools, so switching views must not wipe it. */}
