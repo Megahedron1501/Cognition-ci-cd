@@ -22,6 +22,11 @@ export function speak(text: string): void {
   window.speechSynthesis.speak(utterance);
 }
 
+export function stopSpeaking(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+}
+
 export function playSound(src: string, volume = 0.5): void {
   if (!soundEnabled) return;
   try {

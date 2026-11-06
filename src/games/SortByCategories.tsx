@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SortByCategories.css';
-import { playSound as playAudioFile, speak } from '../utils/sound';
+import { playSound as playAudioFile, speak, stopSpeaking, isSoundEnabled } from '../utils/sound';
 import {
   PromptLevel,
   PROMPT_LEVELS,
@@ -43,13 +43,14 @@ interface Trial {
   timestamp: number; // when the first response happened (epoch ms)
   labelsShown: boolean; // text labels on the choices act as a textual prompt
   fieldSize: number; // how many choices were on screen
+  instructionSpoken: boolean; // app spoke before the first response; false means the clinician gave it
 }
 
 // Targets per category. Each category draws from a shuffled bag so every
 // target comes up once before any repeats (balanced presentation), and the
 // same target is never presented twice in a row across a bag boundary.
 const TARGETS: Partial<Record<Category, string[]>> = {
-  color: ['red', 'blue', 'green', 'yellow'],
+  color: ['red', 'blue', 'green', 'yellow', 'orange', 'purple'],
   shape: ['circle', 'square', 'triangle', 'star', 'heart', 'rectangle', 'oval'],
   animal: ['Dog', 'Cat', 'Bird', 'Fish'],
   size: ['big', 'large', 'small', 'little', 'medium'],
@@ -207,6 +208,28 @@ const SortByCategories: React.FC = () => {
   // discriminating the stimulus, so they're off by default.
   const [showLabels, setShowLabels] = useState(false);
 
+  // Spoken instruction on/off, separate from the global sound toggle so the
+  // clinician can give the instruction themselves and keep the reward sounds.
+  // The ref lets toggling apply right away without restarting the round.
+  const [instructionSpoken, setInstructionSpoken] = useState(true);
+  const instructionSpokenRef = useRef(true);
+  // Whether the app actually spoke during this trial, which is what the data
+  // records - the toggle can change partway through a trial.
+  const spokenThisTrialRef = useRef(false);
+
+  const sayInstruction = (category: Category, targetWord: string) => {
+    if (!instructionSpokenRef.current || !isSoundEnabled()) return;
+    spokenThisTrialRef.current = true;
+    speak(instructionFor(category, targetWord));
+  };
+
+  const toggleInstructionSpoken = () => {
+    const next = !instructionSpoken;
+    instructionSpokenRef.current = next;
+    setInstructionSpoken(next);
+    if (!next) stopSpeaking();
+  };
+
   const targetBagsRef = useRef<Partial<Record<Category, string[]>>>({});
   const lastTargetRef = useRef<Partial<Record<Category, string>>>({});
 
@@ -270,8 +293,9 @@ const SortByCategories: React.FC = () => {
     roundStartRef.current = Date.now();
     trialRecordedRef.current = false;
     roundResolvedRef.current = false;
-    speak(instructionFor(newCategory, newTarget));
-    // drawTarget only touches refs, so it's safe to leave out of the deps.
+    spokenThisTrialRef.current = false;
+    sayInstruction(newCategory, newTarget);
+    // drawTarget and sayInstruction only touch refs, so they're safe to leave out of the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round, difficulty, categoryMode]); // itemDatabase is outside, so not needed here
 
@@ -298,6 +322,7 @@ const SortByCategories: React.FC = () => {
         timestamp: Date.now(),
         labelsShown: showLabels,
         fieldSize: items.length,
+        instructionSpoken: spokenThisTrialRef.current,
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -328,7 +353,7 @@ const SortByCategories: React.FC = () => {
       // Re-present the choices and the instruction for error correction.
       setTimeout(() => {
         setItems(originalItems);
-        speak(instructionFor(currentCategory, target));
+        sayInstruction(currentCategory, target);
       }, 500);
     }
   };
@@ -382,7 +407,7 @@ const SortByCategories: React.FC = () => {
     const headers = [
       'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
       'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
-      'Labels Shown', 'Choices',
+      'Labels Shown', 'Choices', 'Instruction Spoken',
     ];
     // Local time, not UTC, so it matches the session clock when opened in Excel.
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -402,6 +427,7 @@ const SortByCategories: React.FC = () => {
       t.difficulty,
       t.labelsShown ? 'Y' : 'N',
       t.fieldSize,
+      t.instructionSpoken ? 'Y' : 'N',
     ]);
     const start = new Date(trials[0]?.timestamp ?? Date.now());
     const stamp = `${localDate(start)}_${pad(start.getHours())}${pad(start.getMinutes())}`;
@@ -525,6 +551,13 @@ const SortByCategories: React.FC = () => {
           title="Text labels let readers match words instead of the picture/color - recorded in the data when on"
         >
           🏷️ Text Labels: {showLabels ? 'On' : 'Off'}
+        </button>
+        <button
+          className="prompt-toggle-button labels-toggle-button"
+          onClick={toggleInstructionSpoken}
+          title="Turn off to give the instruction yourself. Reward sounds keep playing."
+        >
+          {instructionSpoken ? '🗣️ Spoken Instruction: On' : '🔇 Spoken Instruction: Off'}
         </button>
         {showPromptPanel && (
           <div className="prompt-panel">
@@ -666,12 +699,14 @@ const SortByCategories: React.FC = () => {
         <>
           <div className="game-prompt">
             <h3>{instructionFor(currentCategory, target)}</h3>
-            <button
-              className="say-again-btn"
-              onClick={() => speak(instructionFor(currentCategory, target))}
-            >
-              🔊 Say it again
-            </button>
+            {instructionSpoken && (
+              <button
+                className="say-again-btn"
+                onClick={() => sayInstruction(currentCategory, target)}
+              >
+                🔊 Say it again
+              </button>
+            )}
             <div className="category-badge">
               Looking for: <strong>{target.toUpperCase()}</strong>
             </div>
