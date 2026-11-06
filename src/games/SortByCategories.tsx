@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SortByCategories.css';
-import { playSound as playAudioFile, speak, stopSpeaking, isSoundEnabled } from '../utils/sound';
+import { playSound as playAudioFile, playChime, speak, stopSpeaking, isSoundEnabled } from '../utils/sound';
 import {
   PromptLevel,
   PROMPT_LEVELS,
@@ -363,7 +363,7 @@ const SortByCategories: React.FC = () => {
     if (type === 'correct') {
       playAudioFile('/sounds/coin.mp3', 0.3);
     } else if (type === 'celebration') {
-      playAudioFile('/sounds/celebration.mp3', 0.5);
+      playChime();
     }
   };
 
