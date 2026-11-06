@@ -8,11 +8,12 @@ import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBui
 import SortByCategories from './games/SortByCategories';
 import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
+import BehaviorTracker from './components/BehaviorTracker/BehaviorTracker';
 import { isSoundEnabled, setSoundEnabled } from './utils/sound';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker'>('tokenBoard');
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   if (!hasLaunched) {
@@ -93,6 +94,15 @@ function App() {
         >
           🎯 Choice Board (Demo)
         </button>
+        <button
+          onClick={() => setCurrentView('behaviorTracker')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'behaviorTracker' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          📊 Behavior Data
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -108,6 +118,11 @@ function App() {
         {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
         {currentView === 'sortByCategories' && <SortByCategories />}
         {currentView === 'choiceBoard' && <ChoiceBoard />}
+        {/* Always mounted, only hidden: behavior data runs all session
+            alongside the other tools, so switching views must not wipe it. */}
+        <div style={{ display: currentView === 'behaviorTracker' ? 'block' : 'none' }}>
+          <BehaviorTracker />
+        </div>
       </div>
     </div>
   );
