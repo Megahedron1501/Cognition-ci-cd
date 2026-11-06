@@ -9,11 +9,12 @@ import SortByCategories from './games/SortByCategories';
 import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
 import BehaviorTracker from './components/BehaviorTracker/BehaviorTracker';
+import FunTimer from './components/FunTimer/FunTimer';
 import { isSoundEnabled, setSoundEnabled } from './utils/sound';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer'>('tokenBoard');
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   if (!hasLaunched) {
@@ -103,6 +104,15 @@ function App() {
         >
           📊 Behavior Data
         </button>
+        <button
+          onClick={() => setCurrentView('funTimer')}
+          style={{
+            ...styles.navButton,
+            backgroundColor: currentView === 'funTimer' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          ⏰ Fun Timer
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -122,6 +132,10 @@ function App() {
             alongside the other tools, so switching views must not wipe it. */}
         <div style={{ display: currentView === 'behaviorTracker' ? 'block' : 'none' }}>
           <BehaviorTracker />
+        </div>
+        {/* Same reason: a timer has to keep running while the learner uses another tool. */}
+        <div style={{ display: currentView === 'funTimer' ? 'block' : 'none' }}>
+          <FunTimer />
         </div>
       </div>
     </div>

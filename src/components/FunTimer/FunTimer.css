@@ -1,0 +1,276 @@
+.fun-timer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.fun-timer h2 {
+  margin-top: 0;
+  color: #2C3E50;
+}
+
+.fun-timer button {
+  cursor: pointer;
+}
+
+/* Theme picker */
+.theme-picker {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background: #F8F9FA;
+  border: 3px solid #DEE2E6;
+  border-radius: 12px;
+}
+
+.theme-btn.active {
+  background: #E3F2FD;
+  border-color: #2196F3;
+}
+
+.theme-emoji {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+/* Stage */
+.timer-stage {
+  margin: 20px 0;
+}
+
+.timer-readout {
+  margin-top: 15px;
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: #2C3E50;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Journey themes */
+.journey-track {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.track-space {
+  background: linear-gradient(135deg, #0B1340, #2C3E7B);
+  background-image:
+    radial-gradient(2px 2px at 15% 25%, white, transparent),
+    radial-gradient(2px 2px at 40% 70%, white, transparent),
+    radial-gradient(2px 2px at 65% 20%, white, transparent),
+    radial-gradient(2px 2px at 30% 45%, white, transparent),
+    radial-gradient(2px 2px at 80% 75%, white, transparent),
+    linear-gradient(135deg, #0B1340, #2C3E7B);
+}
+
+.track-grass {
+  background: linear-gradient(#BEE7FF 0%, #BEE7FF 58%, #7BC96F 58%, #5FAE55 100%);
+}
+
+.track-rails {
+  background: linear-gradient(#FCE9C8 0%, #FCE9C8 62%, #8D6E63 62%, #8D6E63 66%, #D7CCC8 66%, #D7CCC8 100%);
+}
+
+.journey-traveler,
+.journey-destination {
+  position: absolute;
+  top: 50%;
+  font-size: 5rem;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.journey-traveler {
+  transition: left 0.2s linear;
+}
+
+.journey-destination {
+  right: 12px;
+}
+
+.traveler-wiggle {
+  display: inline-block;
+}
+
+.timer-stage.running .traveler-wiggle {
+  animation: traveler-wiggle 1.2s ease-in-out infinite;
+}
+
+@keyframes traveler-wiggle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.timer-stage.done .journey-destination {
+  animation: arrive 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes arrive {
+  from { transform: translateY(-50%) scale(1); }
+  to { transform: translateY(-50%) scale(1.15); }
+}
+
+/* Bubbles */
+.bubble-field {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  max-width: 540px;
+  min-height: 180px;
+  margin: 0 auto;
+  align-items: center;
+  justify-items: center;
+}
+
+.bubble {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, white, #81D4FA 45%, #29B6F6);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.9);
+  transition: transform 0.35s ease-in, opacity 0.35s ease-in;
+}
+
+.bubble.popped {
+  opacity: 0;
+  transform: scale(1.5);
+}
+
+/* Pie */
+.pie {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  border: 6px solid #2C3E50;
+  border-radius: 50%;
+}
+
+/* Controls */
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.timer-main-btn {
+  min-width: 200px;
+  padding: 16px 32px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  background: #27AE60;
+  border: none;
+  border-radius: 12px;
+}
+
+.timer-main-btn.pause {
+  background: #F39C12;
+}
+
+.timer-small-btn,
+.timer-settings-toggle {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #2C3E50;
+  background: #ECF0F1;
+  border: 2px solid #BDC3C7;
+  border-radius: 8px;
+}
+
+.preset-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.preset-btn {
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: #6C757D;
+  border: none;
+  border-radius: 8px;
+}
+
+.preset-btn.active {
+  background: #2196F3;
+}
+
+.timer-settings-toggle {
+  display: block;
+  margin: 18px auto 0;
+}
+
+.timer-settings {
+  max-width: 480px;
+  margin: 12px auto 0;
+  padding: 15px;
+  text-align: left;
+  color: #2C3E50;
+  background: #FDF6E3;
+  border: 2px solid #E8DCB5;
+  border-radius: 10px;
+}
+
+.timer-settings > label {
+  display: block;
+  margin-top: 10px;
+}
+
+.timer-settings input[type="number"] {
+  width: 60px;
+  padding: 4px;
+}
+
+.timer-settings-note {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #7F8C8D;
+}
+
+@media (max-width: 600px) {
+  .bubble-field {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .bubble {
+    width: 56px;
+    height: 56px;
+  }
+
+  .journey-traveler,
+  .journey-destination {
+    font-size: 3.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-stage.running .traveler-wiggle,
+  .timer-stage.done .journey-destination {
+    animation: none;
+  }
+}
