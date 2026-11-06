@@ -62,6 +62,7 @@
 }
 
 .difficulty-btn.active {
+  background: #2196f3;
   transform: scale(1.05);
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
@@ -184,8 +185,34 @@
   /* Colors are set via inline style */
 }
 
-.shape-item {
-  /* Shapes are created via clip-path */
+.shape-item,
+.size-item {
+  box-shadow: none;
+}
+
+.shape-icon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.shape-item .item-label {
+  position: relative;
+  margin-top: 0;
+}
+
+/* Fixed tile, so only the picture changes size and the grid doesn't shift. */
+.size-item {
+  width: 140px;
+  height: 140px;
+  line-height: 1;
+}
+
+.size-item .item-label {
+  position: absolute;
+  bottom: 0;
+  margin-top: 0;
 }
 
 .animal-item {

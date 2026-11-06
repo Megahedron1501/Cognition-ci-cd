@@ -9,7 +9,10 @@ import {
 } from '../types/promptLevel';
 import { toCsv, downloadCsv } from '../utils/csv';
 
-type Category = 'color' | 'shape' | 'animal' | 'food' | 'clothing';
+type Category = 'color' | 'shape' | 'animal' | 'size' | 'food' | 'clothing';
+// Which categories a session runs: one on its own, or the mixed rotation.
+type CategoryMode = 'mixed' | 'color' | 'shape' | 'animal' | 'size';
+type SizeClass = 'small' | 'medium' | 'big';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface GameItem {
@@ -19,6 +22,8 @@ interface GameItem {
   shape?: string;
   category: string;
   image?: string;
+  emoji?: string; // size items only
+  sizeClass?: SizeClass; // size items only
 }
 
 // One DTT-style trial per round, scored on the FIRST response only. Clicks
@@ -37,6 +42,7 @@ interface Trial {
   attempts: number; // total clicks until the correct item, including the first
   timestamp: number; // when the first response happened (epoch ms)
   labelsShown: boolean; // text labels on the choices act as a textual prompt
+  fieldSize: number; // how many choices were on screen
 }
 
 // Targets per category. Each category draws from a shuffled bag so every
@@ -44,9 +50,37 @@ interface Trial {
 // same target is never presented twice in a row across a bag boundary.
 const TARGETS: Partial<Record<Category, string[]>> = {
   color: ['red', 'blue', 'green', 'yellow'],
-  shape: ['circle', 'square', 'triangle', 'star'],
+  shape: ['circle', 'square', 'triangle', 'star', 'heart', 'rectangle', 'oval'],
   animal: ['Dog', 'Cat', 'Bird', 'Fish'],
+  size: ['big', 'large', 'small', 'little', 'medium'],
 };
+
+const CATEGORY_MODES: { mode: CategoryMode; label: string }[] = [
+  { mode: 'mixed', label: 'MIXED' },
+  { mode: 'color', label: 'COLORS' },
+  { mode: 'shape', label: 'SHAPES' },
+  { mode: 'animal', label: 'ANIMALS' },
+  { mode: 'size', label: 'SIZES' },
+];
+
+// Synonyms share a size class, so "big" and "large" both mean the largest one.
+const SIZE_CLASS_FOR_WORD: Record<string, SizeClass> = {
+  big: 'big',
+  large: 'big',
+  medium: 'medium',
+  small: 'small',
+  little: 'small',
+};
+const SIZE_NAMES: Record<SizeClass, string> = { small: 'Small', medium: 'Medium', big: 'Big' };
+const SIZE_FONT_PX: Record<SizeClass, number> = { small: 40, medium: 75, big: 120 };
+const SIZE_OBJECTS = [
+  { name: 'Apple', emoji: '🍎' },
+  { name: 'Ball', emoji: '⚽' },
+  { name: 'Star', emoji: '⭐' },
+  { name: 'Dog', emoji: '🐕' },
+  { name: 'Car', emoji: '🚗' },
+  { name: 'Flower', emoji: '🌸' },
+];
 
 function shuffle<T>(values: T[]): T[] {
   const result = [...values];
@@ -57,9 +91,39 @@ function shuffle<T>(values: T[]): T[] {
   return result;
 }
 
+// Exactly one correct answer per trial: one tile per size class, in random
+// positions so size never correlates with where the tile sits. Easy is
+// small vs. big; medium adds a middle size; hard also uses a different object
+// per tile, so the learner has to attend to size and ignore what the object is.
+function buildSizeItems(difficulty: Difficulty): GameItem[] {
+  const classes: SizeClass[] = difficulty === 'easy' ? ['small', 'big'] : ['small', 'medium', 'big'];
+  const objects = shuffle(SIZE_OBJECTS);
+  return shuffle(classes).map((sizeClass, i) => {
+    const object = difficulty === 'hard' ? objects[i] : objects[0];
+    return {
+      id: 100 + i,
+      name: `${SIZE_NAMES[sizeClass]} ${object.name}`,
+      color: '',
+      category: 'size',
+      emoji: object.emoji,
+      sizeClass,
+    };
+  });
+}
+
+function isTargetItem(item: GameItem, category: Category, target: string): boolean {
+  switch (category) {
+    case 'color': return item.color === target;
+    case 'shape': return item.shape === target;
+    case 'animal': return item.name === target;
+    case 'size': return item.sizeClass === SIZE_CLASS_FOR_WORD[target];
+    default: return false;
+  }
+}
+
 // The instruction (SD), shown on screen and spoken aloud.
 function instructionFor(category: Category, target: string): string {
-  return category === 'color' ? `Touch the ${target} one` : `Touch the ${target}`;
+  return category === 'color' || category === 'size' ? `Touch the ${target} one` : `Touch the ${target}`;
 }
 
 // MOVE itemDatabase OUTSIDE the component
@@ -78,6 +142,8 @@ const itemDatabase: GameItem[] = [
   { id: 9, name: 'Triangle', color: 'blue', shape: 'triangle', category: 'shape' },
   { id: 10, name: 'Star', color: 'blue', shape: 'star', category: 'shape' },
   { id: 11, name: 'Heart', color: 'blue', shape: 'heart', category: 'shape' },
+  { id: 16, name: 'Rectangle', color: 'blue', shape: 'rectangle', category: 'shape' },
+  { id: 17, name: 'Oval', color: 'blue', shape: 'oval', category: 'shape' },
   
   // Animals
   { id: 12, name: 'Dog', color: 'brown', category: 'animal' },
@@ -85,6 +151,25 @@ const itemDatabase: GameItem[] = [
   { id: 14, name: 'Bird', color: 'yellow', category: 'animal' },
   { id: 15, name: 'Fish', color: 'orange', category: 'animal' },
 ];
+
+// Real SVG shapes rather than clip-paths: curves like the heart draw properly,
+// and rectangle/oval read clearly next to square/circle.
+const ShapeIcon: React.FC<{ shape: string; color: string }> = ({ shape, color }) => {
+  const paths: Record<string, React.ReactElement> = {
+    circle: <circle cx="50" cy="50" r="46" />,
+    square: <rect x="8" y="8" width="84" height="84" />,
+    triangle: <polygon points="50,6 96,92 4,92" />,
+    star: <polygon points="50,4 62,36 96,36 69,57 79,92 50,71 21,92 31,57 4,36 38,36" />,
+    heart: <path d="M50 92 C12 62 4 42 4 28 C4 14 15 6 28 6 C38 6 46 12 50 22 C54 12 62 6 72 6 C85 6 96 14 96 28 C96 42 88 62 50 92 Z" />,
+    rectangle: <rect x="2" y="24" width="96" height="52" />,
+    oval: <ellipse cx="50" cy="50" rx="48" ry="30" />,
+  };
+  return (
+    <svg className="shape-icon" viewBox="0 0 100 100" fill={color} aria-hidden="true">
+      {paths[shape] ?? paths.circle}
+    </svg>
+  );
+};
 
 const SortByCategories: React.FC = () => {
   // Game state
@@ -97,6 +182,7 @@ const SortByCategories: React.FC = () => {
   // Game configuration
   const [currentCategory, setCurrentCategory] = useState<Category>('color');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const [categoryMode, setCategoryMode] = useState<CategoryMode>('mixed');
   const [target, setTarget] = useState('');
   
   // Game items
@@ -124,9 +210,9 @@ const SortByCategories: React.FC = () => {
   const targetBagsRef = useRef<Partial<Record<Category, string[]>>>({});
   const lastTargetRef = useRef<Partial<Record<Category, string>>>({});
 
-  const drawTarget = (category: Category): string => {
-    const pool = TARGETS[category] ?? [];
-    let bag = targetBagsRef.current[category] ?? [];
+  const drawTarget = (category: Category, pool: string[]): string => {
+    // The pool can shrink between rounds (no "medium" on Easy sizes).
+    let bag = (targetBagsRef.current[category] ?? []).filter(t => pool.includes(t));
     if (bag.length === 0) {
       bag = shuffle(pool);
       if (bag.length > 1 && bag[0] === lastTargetRef.current[category]) {
@@ -143,72 +229,51 @@ const SortByCategories: React.FC = () => {
   const startNewRound = useCallback(() => {
     setMessage('');
     
-    const categories: Category[] = ['color', 'shape', 'animal'];
+    // Sizes stay out of the mixed rotation: it's its own program, and a learner
+    // not working on it shouldn't get untaught targets mixed into their data.
+    const categories: Category[] = categoryMode === 'mixed' ? ['color', 'shape', 'animal'] : [categoryMode];
     const newCategory = categories[(round - 1) % categories.length];
     setCurrentCategory(newCategory);
-    
-    let newTarget = '';
-    let filteredItems: GameItem[] = [];
-    
-    switch (newCategory) {
-      case 'color':
-      case 'shape':
-      case 'animal':
-        newTarget = drawTarget(newCategory);
-        filteredItems = itemDatabase.filter(item => item.category === newCategory);
-        break;
-      default:
-        newTarget = 'red';
-        filteredItems = itemDatabase.filter(item => item.category === 'color');
-    }
-    
-    setTarget(newTarget);
-    
-    // Select random items based on difficulty
-    let numItems = 4;
-    if (difficulty === 'medium') numItems = 6;
-    if (difficulty === 'hard') numItems = 8;
-    
-    // Shuffle and select items
-    const shuffled = [...filteredItems].sort(() => Math.random() - 0.5);
-    const selectedItems = shuffled.slice(0, Math.min(numItems, filteredItems.length));
-    
-    // Ensure at least one target item exists
-    const hasTarget = selectedItems.some(item => 
-      newCategory === 'color' ? item.color === newTarget :
-      newCategory === 'shape' ? item.shape === newTarget :
-      newCategory === 'animal' ? item.name === newTarget : false
+
+    const pool = (TARGETS[newCategory] ?? []).filter(t =>
+      !(newCategory === 'size' && difficulty === 'easy' && t === 'medium')
     );
-    
-    if (!hasTarget && selectedItems.length > 0) {
-      const targetItem = filteredItems.find(item => 
-        newCategory === 'color' ? item.color === newTarget :
-        newCategory === 'shape' ? item.shape === newTarget :
-        newCategory === 'animal' ? item.name === newTarget : false
-      );
-      
-      if (targetItem) {
-        const randomIndex = Math.floor(Math.random() * selectedItems.length);
-        selectedItems[randomIndex] = targetItem;
+    const newTarget = drawTarget(newCategory, pool);
+    setTarget(newTarget);
+
+    let selectedItems: GameItem[];
+    if (newCategory === 'size') {
+      selectedItems = buildSizeItems(difficulty);
+    } else {
+      const filteredItems = itemDatabase.filter(item => item.category === newCategory);
+
+      // Select random items based on difficulty
+      let numItems = 4;
+      if (difficulty === 'medium') numItems = 6;
+      if (difficulty === 'hard') numItems = 8;
+
+      // Shuffle and select items
+      const shuffled = [...filteredItems].sort(() => Math.random() - 0.5);
+      selectedItems = shuffled.slice(0, Math.min(numItems, filteredItems.length));
+
+      // Ensure at least one target item exists
+      if (!selectedItems.some(item => isTargetItem(item, newCategory, newTarget))) {
+        const targetItem = filteredItems.find(item => isTargetItem(item, newCategory, newTarget));
+        if (targetItem) {
+          selectedItems[Math.floor(Math.random() * selectedItems.length)] = targetItem;
+        }
       }
     }
-    
+
     setItems(selectedItems);
-    
-    // Identify target items
-    const targets = selectedItems.filter(item => 
-      newCategory === 'color' ? item.color === newTarget :
-      newCategory === 'shape' ? item.shape === newTarget :
-      newCategory === 'animal' ? item.name === newTarget : false
-    );
-    setTargetItems(targets);
+    setTargetItems(selectedItems.filter(item => isTargetItem(item, newCategory, newTarget)));
     roundStartRef.current = Date.now();
     trialRecordedRef.current = false;
     roundResolvedRef.current = false;
     speak(instructionFor(newCategory, newTarget));
     // drawTarget only touches refs, so it's safe to leave out of the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, difficulty]); // itemDatabase is outside, so not needed here
+  }, [round, difficulty, categoryMode]); // itemDatabase is outside, so not needed here
 
   // Handle item click - FIXED setRound with functional update
   const handleItemClick = (item: GameItem) => {
@@ -232,6 +297,7 @@ const SortByCategories: React.FC = () => {
         attempts: 1,
         timestamp: Date.now(),
         labelsShown: showLabels,
+        fieldSize: items.length,
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -316,7 +382,7 @@ const SortByCategories: React.FC = () => {
     const headers = [
       'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
       'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
-      'Labels Shown',
+      'Labels Shown', 'Choices',
     ];
     // Local time, not UTC, so it matches the session clock when opened in Excel.
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -335,6 +401,7 @@ const SortByCategories: React.FC = () => {
       t.responseTimeMs,
       t.difficulty,
       t.labelsShown ? 'Y' : 'N',
+      t.fieldSize,
     ]);
     const start = new Date(trials[0]?.timestamp ?? Date.now());
     const stamp = `${localDate(start)}_${pad(start.getHours())}${pad(start.getMinutes())}`;
@@ -344,6 +411,11 @@ const SortByCategories: React.FC = () => {
   // Change difficulty
   const changeDifficulty = (newDifficulty: Difficulty) => {
     setDifficulty(newDifficulty);
+    resetGame();
+  };
+
+  const changeCategoryMode = (newMode: CategoryMode) => {
+    setCategoryMode(newMode);
     resetGame();
   };
 
@@ -360,6 +432,7 @@ const SortByCategories: React.FC = () => {
       case 'color': return 'COLOR';
       case 'shape': return 'SHAPE';
       case 'animal': return 'ANIMAL';
+      case 'size': return 'SIZE';
       default: return 'CATEGORY';
     }
   };
@@ -384,16 +457,13 @@ const SortByCategories: React.FC = () => {
         return (
           <div 
             className="game-item shape-item"
-            style={{ 
-              backgroundColor: item.color,
-              clipPath: getShapeClipPath(item.shape || 'circle')
-            }}
             title={showLabels ? item.name : undefined}
           >
+            <ShapeIcon shape={item.shape || 'circle'} color={item.color} />
             {showLabels && <div className="item-label">{item.shape?.toUpperCase()}</div>}
           </div>
         );
-        
+
       case 'animal':
         return (
           <div 
@@ -411,19 +481,23 @@ const SortByCategories: React.FC = () => {
           </div>
         );
         
+      case 'size': {
+        const sizeClass = item.sizeClass || 'medium';
+        // The label uses the word being asked for, so "LARGE" isn't labeled "BIG".
+        const label = sizeClass === SIZE_CLASS_FOR_WORD[target] ? target : SIZE_NAMES[sizeClass];
+        return (
+          <div
+            className="game-item size-item"
+            title={showLabels ? item.name : undefined}
+          >
+            <span style={{ fontSize: `${SIZE_FONT_PX[sizeClass]}px` }}>{item.emoji}</span>
+            {showLabels && <div className="item-label">{label.toUpperCase()}</div>}
+          </div>
+        );
+      }
+
       default:
         return null;
-    }
-  };
-
-  // Helper for shape clipping
-  const getShapeClipPath = (shape: string) => {
-    switch (shape) {
-      case 'square': return 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)';
-      case 'triangle': return 'polygon(50% 0%, 0% 100%, 100% 100%)';
-      case 'star': return 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
-      case 'heart': return 'polygon(50% 0%, 100% 35%, 100% 70%, 50% 100%, 0% 70%, 0% 35%)';
-      default: return 'circle(50% at 50% 50%)';
     }
   };
 
@@ -474,6 +548,18 @@ const SortByCategories: React.FC = () => {
       </div>
 
       <div className="difficulty-selector">
+        <h3>Sort by:</h3>
+        <div className="difficulty-buttons">
+          {CATEGORY_MODES.map(({ mode, label }) => (
+            <button
+              key={mode}
+              className={`difficulty-btn ${categoryMode === mode ? 'active' : ''}`}
+              onClick={() => changeCategoryMode(mode)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <h3>Difficulty:</h3>
         <div className="difficulty-buttons">
           {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
@@ -487,9 +573,19 @@ const SortByCategories: React.FC = () => {
           ))}
         </div>
         <div className="difficulty-info">
-          {difficulty === 'easy' && '4 choices'}
-          {difficulty === 'medium' && '6 choices'}
-          {difficulty === 'hard' && '8 choices'}
+          {categoryMode === 'size' ? (
+            <>
+              {difficulty === 'easy' && '2 sizes, same picture'}
+              {difficulty === 'medium' && '3 sizes, same picture'}
+              {difficulty === 'hard' && '3 sizes, different pictures'}
+            </>
+          ) : (
+            <>
+              {difficulty === 'easy' && '4 choices'}
+              {difficulty === 'medium' && 'Up to 6 choices'}
+              {difficulty === 'hard' && 'Up to 8 choices'}
+            </>
+          )}
         </div>
       </div>
 
@@ -587,7 +683,7 @@ const SortByCategories: React.FC = () => {
             </div>
           )}
 
-          <div className={`items-grid ${difficulty}`}>
+          <div className={`items-grid ${currentCategory === 'size' ? (items.length === 2 ? 'easy' : 'medium') : difficulty}`}>
             {items.map((item) => (
               <div
                 key={item.id}
@@ -601,7 +697,7 @@ const SortByCategories: React.FC = () => {
 
           <div className="instructions">
             <p>Click on the item that matches the category and target.</p>
-            <p>Categories rotate each round: Color → Shape → Animal</p>
+            {categoryMode === 'mixed' && <p>Categories rotate each round: Color → Shape → Animal</p>}
           </div>
         </>
       )}
