@@ -9,28 +9,30 @@
   min-height: 80vh;
 }
 
-.game-header {
+.emotion-matcher-game .game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
-.score-board {
+.emotion-matcher-game .score-board {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 15px;
 }
 
-.score {
+.emotion-matcher-game .score {
   font-size: 1.2rem;
   background: rgba(255, 255, 255, 0.2);
   padding: 10px 20px;
   border-radius: 10px;
 }
 
-.reset-btn {
+.emotion-matcher-game .reset-btn {
   background: #ff6b6b;
   color: white;
   border: none;
@@ -41,11 +43,11 @@
   transition: transform 0.2s;
 }
 
-.reset-btn:hover {
+.emotion-matcher-game .reset-btn:hover {
   transform: scale(1.05);
 }
 
-.message {
+.emotion-matcher-game .message {
   text-align: center;
   font-size: 1.5rem;
   margin: 20px 0;
@@ -55,7 +57,7 @@
   min-height: 30px;
 }
 
-.instructions {
+.emotion-matcher-game .instructions {
   background: rgba(255, 255, 255, 0.9);
   padding: 15px;
   border-radius: 15px;
@@ -64,31 +66,35 @@
   text-align: center;
 }
 
-.instructions h3 {
+.emotion-matcher-game .instructions h3 {
   color: #2196F3;
   margin-top: 0;
 }
 
-.emojis-container, .words-container {
+.emotion-matcher-game .emojis-container, .emotion-matcher-game .words-container {
   margin: 40px 0;
 }
 
-.emojis-container h3, .words-container h3 {
+.emotion-matcher-game .emojis-container h3, .emotion-matcher-game .words-container h3 {
   color: #FFD700;
   text-align: center;
   margin-bottom: 20px;
 }
 
-.cards-row {
-  position: relative;
-  height: 150px;
+/* Cards flow and wrap, so they stay on screen at any width. */
+.emotion-matcher-game .cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  min-height: 150px;
+  padding: 15px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   margin: 20px 0;
 }
 
-.emotion-card, .word-card {
-  position: absolute;
+.emotion-matcher-game .emotion-card, .emotion-matcher-game .word-card {
   width: 120px;
   height: 120px;
   border-radius: 15px;
@@ -100,46 +106,46 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.emotion-card {
+.emotion-matcher-game .emotion-card {
   background: rgba(76, 175, 80, 0.9);
   cursor: grab;
 }
 
-.emotion-card:hover {
+.emotion-matcher-game .emotion-card:hover {
   transform: scale(1.1);
   z-index: 10;
 }
 
-.word-card {
+.emotion-matcher-game .word-card {
   background: rgba(33, 150, 243, 0.9);
   border: 2px dashed rgba(255, 255, 255, 0.5);
 }
 
-.emotion-card.matched, .word-card.matched {
+.emotion-matcher-game .emotion-card.matched, .emotion-matcher-game .word-card.matched {
   opacity: 0.5;
   cursor: default;
   transform: scale(0.9);
 }
 
-.emoji {
+.emotion-matcher-game .emoji {
   font-size: 3rem;
   margin-bottom: 10px;
 }
 
-.word {
-  font-size: 1.5rem;
+.emotion-matcher-game .word {
+  font-size: 1.25rem; /* "Disgusted" has to fit inside the card */
   font-weight: bold;
   color: white;
 }
 
-.drag-hint, .drop-hint {
+.emotion-matcher-game .drag-hint, .emotion-matcher-game .drop-hint {
   font-size: 0.8rem;
   margin-top: 5px;
   opacity: 0.8;
   font-style: italic;
 }
 
-.emotion-guide {
+.emotion-matcher-game .emotion-guide {
   background: rgba(255, 255, 255, 0.9);
   padding: 20px;
   border-radius: 15px;
@@ -147,20 +153,20 @@
   margin-top: 40px;
 }
 
-.emotion-guide h4 {
+.emotion-matcher-game .emotion-guide h4 {
   color: #2196F3;
   text-align: center;
   margin-top: 0;
 }
 
-.guide-grid {
+.emotion-matcher-game .guide-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 15px;
   margin-top: 15px;
 }
 
-.guide-item {
+.emotion-matcher-game .guide-item {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,11 +176,33 @@
   border-radius: 10px;
 }
 
-.guide-emoji {
+.emotion-matcher-game .guide-emoji {
   font-size: 1.5rem;
 }
 
-.guide-word {
+.emotion-matcher-game .guide-word {
   font-weight: bold;
   color: #333;
+}
+
+/* Phones: a little less padding around the cards. */
+@media (max-width: 600px) {
+  .emotion-matcher-game {
+    padding: 12px;
+  }
+
+  .emotion-matcher-game .cards-row {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .emotion-matcher-game .emotion-card,
+  .emotion-matcher-game .word-card {
+    width: 100px;
+    height: 100px;
+  }
+
+  .emotion-matcher-game .word {
+    font-size: 1.05rem;
+  }
 }

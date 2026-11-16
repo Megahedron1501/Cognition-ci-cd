@@ -19,6 +19,7 @@
 .mode-toggle {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -63,6 +64,7 @@
 .schedule-controls {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 15px;
   margin-top: 30px;
   padding-top: 20px;
@@ -120,6 +122,12 @@
   font-size: 2rem;
 }
 
+/* The text takes the card's free space, so titles don't wrap early and the + sits at the right edge. */
+.schedule-card .card-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .schedule-card .card-title {
   font-weight: bold;
   font-size: 1.1rem;
@@ -135,4 +143,21 @@
 
 .schedule-card.break {
   border-left: 5px solid #f39c12;
+}
+
+/* Library above the schedule on narrow screens, instead of side by side. */
+@media (max-width: 700px) {
+  .visual-schedule {
+    padding: 12px 0;
+  }
+
+  .schedule-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .activity-library,
+  .schedule-area {
+    padding: 12px;
+  }
 }

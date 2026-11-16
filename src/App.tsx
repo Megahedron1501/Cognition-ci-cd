@@ -35,7 +35,7 @@ function App() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="app-container" style={styles.container}>
       {/* Global Header - Can stay or customize */}
       <div style={styles.header}>
         <h1 style={styles.title}>🧠 Cognition ABA Tools</h1>
@@ -62,83 +62,83 @@ function App() {
       </div>
 
       {/* Navigation */}
-      <div style={styles.navigation}>
-        <button 
+      <div className="app-nav">
+        <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('tokenBoard')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'tokenBoard' ? '#4CAF50' : '#6c757d'
           }}
         >
           🏅 Token Board
         </button>
-        <button 
+        <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('shapeGame')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'shapeGame' ? '#4CAF50' : '#6c757d'
           }}
         >
           🎯 Shape Sorter
         </button>
-        <button 
+        <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('emotionGame')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'emotionGame' ? '#4CAF50' : '#6c757d'
           }}
         >
           🎭 Emotion Matcher
         </button>
-        <button 
+        <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('scheduleBuilder')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'scheduleBuilder' ? '#4CAF50' : '#6c757d'
           }}
         >
           📅 Schedule Builder
         </button>
         <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('sortByCategories')}
-          style = {{
-            ...styles.navButton,
+          style={{
             backgroundColor: currentView === 'sortByCategories' ? '#4CAF50' : '#6c757d' 
            }}
         >
           🎯 Sort By Categories
         </button>
         <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('choiceBoard')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'choiceBoard' ? '#4CAF50' : '#6c757d'
           }}
         >
           🎯 Choice Board (Demo)
         </button>
         <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('behaviorTracker')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'behaviorTracker' ? '#4CAF50' : '#6c757d'
           }}
         >
           📊 Behavior Data
         </button>
         <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('funTimer')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'funTimer' ? '#4CAF50' : '#6c757d'
           }}
         >
           ⏰ Fun Timer
         </button>
         <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('progress')}
           style={{
-            ...styles.navButton,
             backgroundColor: currentView === 'progress' ? '#4CAF50' : '#6c757d'
           }}
         >
@@ -183,7 +183,6 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#F0F8FF',
-    padding: '20px',
     fontFamily: 'Arial, sans-serif',
   },
   header: {
@@ -209,24 +208,6 @@ const styles = {
     border: '2px solid #BDC3C7',
     borderRadius: '8px',
     cursor: 'pointer',
-  },
-  navigation: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '15px',
-    marginBottom: '30px',
-    flexWrap: 'wrap' as const,
-  },
-  navButton: {
-    padding: '12px 24px',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    minWidth: '160px',
   },
   content: {
     maxWidth: '1200px',

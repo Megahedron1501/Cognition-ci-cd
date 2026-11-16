@@ -123,8 +123,6 @@ const ShapeSorterGame: React.FC = () => {
             key={shape.id}
             className="shape"
             style={{
-              left: `${shape.x}px`,
-              top: `${shape.y}px`,
               backgroundColor: shape.color,
               cursor: 'grab'
             }}

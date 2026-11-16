@@ -143,7 +143,6 @@ const EmotionMatcherGame: React.FC = () => {
             <div
               key={card.id}
               className={`emotion-card ${card.matched ? 'matched' : ''}`}
-              style={{ left: `${card.x}px`, top: `${card.y}px` }}
               draggable={!card.matched}
               onDragStart={() => !card.matched && handleDragStart(card.id)}
             >
@@ -162,7 +161,6 @@ const EmotionMatcherGame: React.FC = () => {
             <div
               key={card.id}
               className={`word-card ${card.matched ? 'matched' : ''}`}
-              style={{ left: `${card.x}px`, top: `${card.y}px` }}
               onDragOver={(e) => !card.matched && e.preventDefault()}
               onDrop={() => !card.matched && handleDrop(card.id)}
             >

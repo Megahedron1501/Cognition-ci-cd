@@ -581,7 +581,8 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
             className="game-item size-item"
             title={showLabels ? item.name : undefined}
           >
-            <span style={{ fontSize: `${SIZE_FONT_PX[sizeClass]}px` }}>{item.emoji}</span>
+            {/* --size-scale shrinks all three sizes together on small screens, keeping their ratios. */}
+            <span style={{ fontSize: `calc(${SIZE_FONT_PX[sizeClass]}px * var(--size-scale, 1))` }}>{item.emoji}</span>
             {showLabels && <div className="item-label">{label.toUpperCase()}</div>}
           </div>
         );
@@ -777,30 +778,32 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
             </ul>
 
             <h4>Trial-by-trial</h4>
-            <table className="trial-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Target</th>
-                  <th>Prompt</th>
-                  <th>1st response</th>
-                  <th>Attempts</th>
-                  <th>Latency</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trials.map(t => (
-                  <tr key={t.round}>
-                    <td>{t.round}</td>
-                    <td>{t.target}</td>
-                    <td>{t.promptLevel}</td>
-                    <td>{t.correct ? '+' : '−'}</td>
-                    <td>{t.attempts}</td>
-                    <td>{t.responseTimeMs}ms</td>
+            <div className="trial-table-scroll">
+              <table className="trial-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Target</th>
+                    <th>Prompt</th>
+                    <th>1st response</th>
+                    <th>Attempts</th>
+                    <th>Latency</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {trials.map(t => (
+                    <tr key={t.round}>
+                      <td>{t.round}</td>
+                      <td>{t.target}</td>
+                      <td>{t.promptLevel}</td>
+                      <td>{t.correct ? '+' : '−'}</td>
+                      <td>{t.attempts}</td>
+                      <td>{t.responseTimeMs}ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <button onClick={exportTrialsCsv} className="export-csv-btn">
               ⬇️ Download CSV

@@ -36,3 +36,48 @@
     transform: rotate(360deg);
   }
 }
+
+/* App shell: padding and tool navigation. */
+.app-container {
+  padding: 20px;
+}
+
+.app-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.app-nav-btn {
+  min-width: 160px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Phones: an even two-column grid instead of one ragged button per row. */
+@media (max-width: 600px) {
+  .app-container {
+    padding: 12px;
+  }
+
+  .app-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .app-nav-btn {
+    min-width: 0;
+    padding: 10px 6px;
+    font-size: 0.85rem;
+  }
+}

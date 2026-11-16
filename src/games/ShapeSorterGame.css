@@ -8,27 +8,30 @@
   color: white;
 }
 
-.game-header {
+.shape-sorter-game .game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-.score-board {
+.shape-sorter-game .score-board {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 15px;
 }
 
-.score {
+.shape-sorter-game .score {
   font-size: 1.2rem;
   background: rgba(255, 255, 255, 0.2);
   padding: 10px 20px;
   border-radius: 10px;
 }
 
-.reset-btn {
+.shape-sorter-game .reset-btn {
   background: #ff6b6b;
   color: white;
   border: none;
@@ -39,11 +42,11 @@
   transition: transform 0.2s;
 }
 
-.reset-btn:hover {
+.shape-sorter-game .reset-btn:hover {
   transform: scale(1.05);
 }
 
-.message {
+.shape-sorter-game .message {
   text-align: center;
   font-size: 1.5rem;
   margin: 20px 0;
@@ -53,19 +56,20 @@
   min-height: 30px;
 }
 
-.bins-container {
+.shape-sorter-game .bins-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-around;
   margin: 40px 0;
   gap: 20px;
 }
 
-.bin {
+.shape-sorter-game .bin {
   background: rgba(255, 255, 255, 0.9);
   padding: 20px;
   border-radius: 15px;
   text-align: center;
-  flex: 1;
+  flex: 1 1 140px; /* wraps to fewer bins per row on narrow screens */
   color: #333;
   min-height: 200px;
   display: flex;
@@ -74,22 +78,22 @@
   justify-content: space-between;
 }
 
-.bin-shape {
+.shape-sorter-game .bin-shape {
   width: 80px;
   height: 80px;
   margin: 10px auto;
 }
 
-.bin-shape.circle {
+.shape-sorter-game .bin-shape.circle {
   border-radius: 50%;
   background: #4CAF50;
 }
 
-.bin-shape.square {
+.shape-sorter-game .bin-shape.square {
   background: #2196F3;
 }
 
-.bin-shape.triangle {
+.shape-sorter-game .bin-shape.triangle {
   width: 0;
   height: 0;
   border-left: 40px solid transparent;
@@ -98,18 +102,18 @@
   background: transparent !important;
 }
 
-.bin-label {
+.shape-sorter-game .bin-label {
   font-weight: bold;
   margin: 10px 0;
   font-size: 1.2rem;
 }
 
-.bin-count {
+.shape-sorter-game .bin-count {
   font-size: 1.1rem;
   color: #666;
 }
 
-.bin-drop-zone {
+.shape-sorter-game .bin-drop-zone {
   margin-top: 10px;
   padding: 10px;
   background: #e3f2fd;
@@ -119,16 +123,21 @@
   font-weight: bold;
 }
 
-.shapes-container {
-  position: relative;
-  height: 200px;
+/* Shapes flow and wrap, so they stay on screen at any width. */
+.shape-sorter-game .shapes-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  min-height: 120px;
+  padding: 20px;
   margin: 40px 0;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
 }
 
-.shape {
-  position: absolute;
+.shape-sorter-game .shape {
   width: 80px;
   height: 80px;
   border-radius: 15px;
@@ -140,22 +149,22 @@
   transition: transform 0.2s;
 }
 
-.shape:hover {
+.shape-sorter-game .shape:hover {
   transform: scale(1.1);
 }
 
-.shape-inner {
+.shape-sorter-game .shape-inner {
   width: 50px;
   height: 50px;
   background: white;
   opacity: 0.7;
 }
 
-.shape-inner.circle {
+.shape-sorter-game .shape-inner.circle {
   border-radius: 50%;
 }
 
-.shape-inner.triangle {
+.shape-sorter-game .shape-inner.triangle {
   width: 0;
   height: 0;
   border-left: 25px solid transparent;
@@ -164,14 +173,14 @@
   background: transparent !important;
 }
 
-.shape-label {
+.shape-sorter-game .shape-label {
   margin-top: 5px;
   color: white;
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.instructions {
+.shape-sorter-game .instructions {
   background: rgba(255, 255, 255, 0.9);
   padding: 20px;
   border-radius: 15px;
@@ -179,16 +188,65 @@
   margin-top: 30px;
 }
 
-.instructions h3 {
+.shape-sorter-game .instructions h3 {
   color: #2196F3;
   margin-top: 0;
 }
 
-.instructions ol {
+.shape-sorter-game .instructions ol {
   padding-left: 20px;
 }
 
-.instructions li {
+.shape-sorter-game .instructions li {
   margin: 10px 0;
   line-height: 1.5;
+}
+/* Phones: keep all three bins in one compact row, so the shapes stay close to them. */
+@media (max-width: 600px) {
+  .shape-sorter-game {
+    padding: 12px;
+  }
+
+  .shape-sorter-game .bins-container {
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 20px 0;
+  }
+
+  .shape-sorter-game .bin {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    padding: 10px 4px;
+  }
+
+  .shape-sorter-game .bin-shape {
+    width: 48px;
+    height: 48px;
+  }
+
+  .shape-sorter-game .bin-shape.triangle {
+    border-left-width: 24px;
+    border-right-width: 24px;
+    border-bottom-width: 48px;
+  }
+
+  .shape-sorter-game .bin-label {
+    font-size: 0.8rem;
+  }
+
+  .shape-sorter-game .bin-count,
+  .shape-sorter-game .bin-drop-zone {
+    font-size: 0.75rem;
+  }
+
+  .shape-sorter-game .bin-drop-zone {
+    padding: 6px 2px;
+  }
+
+  .shape-sorter-game .shapes-container {
+    gap: 12px;
+    padding: 12px;
+    margin: 20px 0;
+  }
 }

@@ -415,22 +415,24 @@ const BehaviorTracker: React.FC = () => {
         )}
 
         {abcNotes.length > 0 && (
-          <table className="abc-table">
-            <thead>
-              <tr><th>Time</th><th>Behavior</th><th>Antecedent</th><th>Consequence</th><th>Notes</th></tr>
-            </thead>
-            <tbody>
-              {abcNotes.map((n, i) => (
-                <tr key={i}>
-                  <td>{sessionStart !== null ? formatDuration(n.time - sessionStart) : ''}</td>
-                  <td>{behaviorName(n.behaviorId)}</td>
-                  <td>{n.antecedent}</td>
-                  <td>{n.consequence}</td>
-                  <td>{n.notes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="abc-table-scroll">
+            <table className="abc-table">
+              <thead>
+                <tr><th>Time</th><th>Behavior</th><th>Antecedent</th><th>Consequence</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                {abcNotes.map((n, i) => (
+                  <tr key={i}>
+                    <td>{sessionStart !== null ? formatDuration(n.time - sessionStart) : ''}</td>
+                    <td>{behaviorName(n.behaviorId)}</td>
+                    <td>{n.antecedent}</td>
+                    <td>{n.consequence}</td>
+                    <td>{n.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
