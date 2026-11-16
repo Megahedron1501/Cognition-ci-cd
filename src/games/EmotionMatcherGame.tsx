@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './EmotionMatcherGame.css';
+import { playSound } from '../utils/sound';
 
 type Emotion = 'happy' | 'sad' | 'angry' | 'surprised' | 'scared' | 'disgusted';
 
@@ -77,8 +78,7 @@ const EmotionMatcherGame: React.FC = () => {
       setScore(score + 1);
       setMessage(`🎉 Correct! ${emotionCard.word} = ${emotionCard.emoji}`);
       
-      // Play success sound
-      new Audio('/sounds/coin.mp3').play();
+      playSound('/sounds/coin.mp3', 0.5);
       
       // Mark as matched
       setEmotionCards(emotionCards.map(c => 
@@ -90,10 +90,17 @@ const EmotionMatcherGame: React.FC = () => {
     } else {
       // Incorrect match
       setMessage('🤔 Try again! Match the emotion to the correct word.');
-      new Audio('/sounds/error.mp3').play();
     }
     
     setDraggedCard(null);
+  };
+
+  // Tap-to-place for touch screens, where dragging doesn't work: tap an
+  // emotion, then tap the word it matches. Tapping it again deselects it.
+  const handleEmotionTap = (cardId: number) => {
+    const deselecting = draggedCard === cardId;
+    setDraggedCard(deselecting ? null : cardId);
+    if (!deselecting) setMessage('Now tap the word it matches.');
   };
 
   const resetGame = () => {
@@ -132,7 +139,7 @@ const EmotionMatcherGame: React.FC = () => {
 
       <div className="instructions">
         <h3>How to Play:</h3>
-        <p>Drag the emotion emojis to match the correct emotion words!</p>
+        <p>Drag the emotion emojis to match the correct emotion words! On a phone or tablet, tap an emoji, then tap its word.</p>
       </div>
 
       {/* Emotion Emojis (Top Row) */}
@@ -142,9 +149,10 @@ const EmotionMatcherGame: React.FC = () => {
           {emotionCards.map(card => (
             <div
               key={card.id}
-              className={`emotion-card ${card.matched ? 'matched' : ''}`}
+              className={`emotion-card ${card.matched ? 'matched' : ''} ${draggedCard === card.id ? 'selected' : ''}`}
               draggable={!card.matched}
               onDragStart={() => !card.matched && handleDragStart(card.id)}
+              onClick={() => !card.matched && handleEmotionTap(card.id)}
             >
               <div className="emoji">{card.emoji}</div>
               {!card.matched && <div className="drag-hint">Drag me!</div>}
@@ -160,9 +168,10 @@ const EmotionMatcherGame: React.FC = () => {
           {wordCards.map(card => (
             <div
               key={card.id}
-              className={`word-card ${card.matched ? 'matched' : ''}`}
+              className={`word-card ${card.matched ? 'matched' : ''} ${draggedCard !== null && !card.matched ? 'awaiting-tap' : ''}`}
               onDragOver={(e) => !card.matched && e.preventDefault()}
               onDrop={() => !card.matched && handleDrop(card.id)}
+              onClick={() => !card.matched && draggedCard !== null && handleDrop(card.id)}
             >
               <div className="word">{card.word}</div>
               {!card.matched && <div className="drop-hint">Drop here</div>}

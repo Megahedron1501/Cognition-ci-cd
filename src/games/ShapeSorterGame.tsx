@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './ShapeSorterGame.css';
+import { playSound } from '../utils/sound';
 
 interface Shape {
   id: number;
@@ -32,20 +33,21 @@ const ShapeSorterGame: React.FC = () => {
 
   const [score, setScore] = useState(0);
   const [message, setMessage] = useState('Drag shapes to matching bins!');
+  // Tap-to-place for touch screens, where dragging doesn't work: tap a shape,
+  // then tap a bin. The child still has to choose the bin themselves.
+  const [selectedShapeId, setSelectedShapeId] = useState<number | null>(null);
 
   const handleDrop = (shapeId: number, binType: 'circle' | 'square' | 'triangle') => {
     const shape = shapes.find(s => s.id === shapeId);
     if (!shape) return;
+    setSelectedShapeId(null);
 
     if (shape.type === binType) {
       // Correct match
       setScore(score + 1);
       setMessage('🎉 Correct! Great job!');
       
-      // Play success sound
-      const audio = new Audio('/sounds/coin.mp3');
-      audio.volume = 0.3;
-      audio.play();
+      playSound('/sounds/coin.mp3', 0.3);
       
       // Remove shape and update bin
       setShapes(shapes.filter(s => s.id !== shapeId));
@@ -55,9 +57,6 @@ const ShapeSorterGame: React.FC = () => {
     } else {
       // Incorrect match
       setMessage('🤔 Try again! Match the shape type.');
-      const audio = new Audio('/sounds/error.mp3');
-      audio.volume = 0.3;
-      audio.play();
     }
   };
 
@@ -77,6 +76,13 @@ const ShapeSorterGame: React.FC = () => {
     ]);
     setScore(0);
     setMessage('Drag shapes to matching bins!');
+    setSelectedShapeId(null);
+  };
+
+  const handleShapeTap = (shapeId: number) => {
+    const deselecting = selectedShapeId === shapeId;
+    setSelectedShapeId(deselecting ? null : shapeId);
+    if (!deselecting) setMessage('Now tap the bin it goes in.');
   };
 
   return (
@@ -96,7 +102,8 @@ const ShapeSorterGame: React.FC = () => {
         {bins.map(bin => (
           <div 
             key={bin.type}
-            className="bin"
+            className={`bin ${selectedShapeId !== null ? 'awaiting-tap' : ''}`}
+            onClick={() => selectedShapeId !== null && handleDrop(selectedShapeId, bin.type)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -121,7 +128,7 @@ const ShapeSorterGame: React.FC = () => {
         {shapes.map(shape => (
           <div
             key={shape.id}
-            className="shape"
+            className={`shape ${selectedShapeId === shape.id ? 'selected' : ''}`}
             style={{
               backgroundColor: shape.color,
               cursor: 'grab'
@@ -130,7 +137,7 @@ const ShapeSorterGame: React.FC = () => {
             onDragStart={(e) => {
               e.dataTransfer.setData('shapeId', shape.id.toString());
             }}
-         
+            onClick={() => handleShapeTap(shape.id)}
           >
             <div className={`shape-inner ${shape.type}`}></div>
             <div className="shape-label">{shape.type}</div>
@@ -144,7 +151,7 @@ const ShapeSorterGame: React.FC = () => {
           <li>Drag shapes to the matching bins</li>
           <li>Circles go in circle bin, squares in square bin, etc.</li>
           <li>Get all 6 correct to win!</li>
-          <li>Click shapes if drag doesn't work (simplified version)</li>
+          <li>On a phone or tablet: tap a shape, then tap its bin</li>
         </ol>
       </div>
     </div>

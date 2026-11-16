@@ -111,6 +111,18 @@
   cursor: grab;
 }
 
+/* Tap-to-place: the chosen emotion, and words ready to receive it. */
+.emotion-matcher-game .emotion-card.selected {
+  outline: 4px solid #FFD700;
+  outline-offset: 3px;
+  transform: scale(1.08);
+}
+
+.emotion-matcher-game .word-card.awaiting-tap {
+  cursor: pointer;
+  border-color: #FFD700;
+}
+
 .emotion-matcher-game .emotion-card:hover {
   transform: scale(1.1);
   z-index: 10;
