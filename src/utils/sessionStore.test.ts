@@ -1,6 +1,6 @@
 import { SavedSession } from '../types/session';
 import {
-  addClient, deleteClient, exportBackup, getClients, getSessions, importBackup, saveSession,
+  addClient, deleteClient, exportBackup, getClients, getProgram, getSessions, importBackup, saveProgram, saveSession,
 } from './sessionStore';
 
 const session = (clientId: string, startedAt: number): SavedSession => ({
@@ -54,4 +54,18 @@ test('a backup restores everything, and a bad file changes nothing', () => {
 test('corrupted storage reads as empty instead of crashing', () => {
   localStorage.setItem('cognition.data.v1', '{oops');
   expect(getClients()).toEqual([]);
+});
+
+test('touching and naming programs for the same category stay separate', () => {
+  const base = {
+    clientId: 'c1', category: 'shape' as const, targets: [], difficulty: 'easy' as const,
+    trialsPerSession: 10, criterion: { percent: 80, sessions: 3 }, events: [],
+  };
+  // An older program saved before naming existed has no responseType: it's receptive.
+  saveProgram({ ...base, id: 'old' });
+  saveProgram({ ...base, id: 'naming', responseType: 'expressive' });
+  expect(getProgram('c1', 'shape')?.id).toBe('old');
+  expect(getProgram('c1', 'shape', 'receptive')?.id).toBe('old');
+  expect(getProgram('c1', 'shape', 'expressive')?.id).toBe('naming');
+  expect(getProgram('c1', 'color', 'expressive')).toBeNull();
 });

@@ -476,6 +476,60 @@
   border-radius: 4px;
 }
 
+/* Name it mode: one large picture and the clinician's scoring buttons. */
+.sort-by-categories .items-grid.single {
+  grid-template-columns: 1fr;
+  min-height: 0;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sort-by-categories .items-grid.single .item-container {
+  cursor: default;
+}
+
+.sort-by-categories .items-grid.single .item-container:hover {
+  transform: none;
+}
+
+.sort-by-categories .items-grid.single .game-item {
+  width: 180px;
+  height: 180px;
+}
+
+.sort-by-categories .items-grid.single .animal-emoji {
+  font-size: 5rem;
+}
+
+.sort-by-categories .expressive-scoring {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -10px 0 20px;
+}
+
+.sort-by-categories .expressive-scoring button {
+  min-width: 150px;
+  padding: 14px 20px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sort-by-categories .score-correct {
+  background: #27AE60;
+}
+
+.sort-by-categories .score-incorrect {
+  background: #C0392B;
+}
+
 /* Prompt level selector - collapsed by default so it stays out of the way
    for anyone who isn't tracking prompts. */
 .sort-by-categories .prompt-panel-wrapper {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Category, Difficulty, PhaseEvent, Program, ProgramTarget, TargetStatus } from '../types/session';
+import { Category, Difficulty, PhaseEvent, Program, ProgramTarget, ResponseType, TargetStatus } from '../types/session';
 import { createId } from '../utils/sessionStore';
 import { MIN_TRIALS_PER_TARGET } from '../utils/mastery';
 
@@ -10,6 +10,7 @@ interface ProgramSettingsProps {
   clientId: string | null;
   clientCode: string | null;
   category: Category | null; // null in Mixed, which has no single program
+  responseType: ResponseType; // touching and naming are separate programs
   allTargets: string[];
   program: Program | null;
   currentDifficulty: Difficulty;
@@ -26,8 +27,9 @@ const STATUS_LABELS: Record<TargetStatus, string> = {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value || min));
 
 const ProgramSettings: React.FC<ProgramSettingsProps> = ({
-  clientId, clientCode, category, allTargets, program, currentDifficulty, onSave, onRemove,
+  clientId, clientCode, category, responseType, allTargets, program, currentDifficulty, onSave, onRemove,
 }) => {
+  const naming = responseType === 'expressive';
   // Targets added to the game after this program was made show up as Not running.
   const [targets, setTargets] = useState<ProgramTarget[]>(() => allTargets.map(word => ({
     word,
@@ -64,7 +66,7 @@ const ProgramSettings: React.FC<ProgramSettingsProps> = ({
     const events: PhaseEvent[] = targets
       .filter(t => (program.targets.find(old => old.word === t.word)?.status ?? 'onHold') !== t.status)
       .map(t => ({ at, label: `${t.word}: ${STATUS_LABELS[t.status]}`, target: t.word }));
-    if (program.difficulty !== difficulty) events.push({ at, label: `Difficulty: ${difficulty}` });
+    if (!naming && program.difficulty !== difficulty) events.push({ at, label: `Difficulty: ${difficulty}` });
     return events;
   };
 
@@ -73,6 +75,7 @@ const ProgramSettings: React.FC<ProgramSettingsProps> = ({
       id: program?.id ?? createId(),
       clientId,
       category,
+      responseType,
       targets,
       difficulty,
       trialsPerSession,
@@ -83,7 +86,9 @@ const ProgramSettings: React.FC<ProgramSettingsProps> = ({
 
   return (
     <div className="program-settings">
-      <h3>⚙️ {category[0].toUpperCase() + category.slice(1)} program for {clientCode}</h3>
+      <h3>
+        ⚙️ {category[0].toUpperCase() + category.slice(1)} {naming ? 'naming' : 'touching'} program for {clientCode}
+      </h3>
 
       {targets.map(t => (
         <div key={t.word} className="program-target-row">
@@ -104,14 +109,17 @@ const ProgramSettings: React.FC<ProgramSettingsProps> = ({
 
       <hr />
 
-      <label className="program-field">
-        Difficulty
-        <select value={difficulty} onChange={e => setDifficulty(e.target.value as Difficulty)}>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </label>
+      {/* Naming always shows one picture, so difficulty doesn't apply. */}
+      {!naming && (
+        <label className="program-field">
+          Difficulty
+          <select value={difficulty} onChange={e => setDifficulty(e.target.value as Difficulty)}>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+      )}
       <label className="program-field">
         Trials per session
         <input

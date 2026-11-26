@@ -3,7 +3,7 @@
 // be cleared or blocked, so reads fall back to empty and writes report failure
 // instead of throwing - callers show the failure rather than losing data silently.
 
-import { CognitionData, Client, Program, SavedSession, Category } from '../types/session';
+import { CognitionData, Client, Program, SavedSession, Category, ResponseType, responseTypeOf } from '../types/session';
 
 const STORAGE_KEY = 'cognition.data.v1';
 
@@ -84,8 +84,14 @@ export function deleteSession(sessionId: string): boolean {
 }
 
 // --- Programs ---
-export function getProgram(clientId: string, category: Category): Program | null {
-  return load().programs.find(p => p.clientId === clientId && p.category === category) ?? null;
+export function getProgram(
+  clientId: string,
+  category: Category,
+  responseType: ResponseType = 'receptive',
+): Program | null {
+  return load().programs.find(p =>
+    p.clientId === clientId && p.category === category && responseTypeOf(p) === responseType
+  ) ?? null;
 }
 
 export function getPrograms(clientId: string): Program[] {

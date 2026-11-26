@@ -7,6 +7,16 @@ import { PromptLevel } from './promptLevel';
 export type Category = 'color' | 'shape' | 'animal' | 'size';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+// Receptive: the learner touches the named item ("Touch the circle").
+// Expressive: the learner names a single item out loud ("What shape is this?")
+// and the clinician scores it. These are different skills, so their programs
+// and data are always kept apart.
+export type ResponseType = 'receptive' | 'expressive';
+
+// Data saved before expressive mode existed has no responseType; it was all receptive.
+export const responseTypeOf = (item: { responseType?: ResponseType }): ResponseType =>
+  item.responseType ?? 'receptive';
+
 // One DTT-style trial per round, scored on the FIRST response only. Clicks
 // after an error are error correction, not new trials - they're counted in
 // `attempts` but never change `correct`.
@@ -25,6 +35,7 @@ export interface Trial {
   fieldSize: number; // how many choices were on screen
   instructionSpoken: boolean; // app spoke before the first response; false means the clinician gave it
   programId?: string; // set when this trial ran under a program; only these count toward mastery
+  responseType?: ResponseType; // absent on older data, which is receptive
 }
 
 export interface Client {
@@ -66,6 +77,7 @@ export interface Program {
   id: string;
   clientId: string;
   category: Category;
+  responseType?: ResponseType; // absent on older programs, which are receptive
   targets: ProgramTarget[];
   difficulty: Difficulty;
   trialsPerSession: number;

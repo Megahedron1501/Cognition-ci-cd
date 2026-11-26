@@ -1,6 +1,6 @@
 // The trial-by-trial columns shared by the single-session and whole-client CSV exports.
 
-import { Trial } from '../types/session';
+import { Trial, responseTypeOf } from '../types/session';
 import { isIndependentCorrect } from './mastery';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -13,7 +13,7 @@ export const fileStamp = (d: Date) => `${localDate(d)}_${pad(d.getHours())}${pad
 export const TRIAL_CSV_HEADERS = [
   'Timestamp', 'Trial', 'Category', 'Target', 'Prompt Level',
   'First Response', 'Correct', 'Independent', 'Attempts', 'Latency (ms)', 'Difficulty',
-  'Labels Shown', 'Choices', 'Instruction Spoken', 'In Program',
+  'Labels Shown', 'Choices', 'Instruction Spoken', 'In Program', 'Skill',
 ];
 
 export function trialCsvRow(t: Trial): (string | number)[] {
@@ -34,5 +34,6 @@ export function trialCsvRow(t: Trial): (string | number)[] {
     t.fieldSize,
     t.instructionSpoken ? 'Y' : 'N',
     t.programId ? 'Y' : 'N',
+    responseTypeOf(t) === 'expressive' ? 'Name it (expressive)' : 'Touch it (receptive)',
   ];
 }

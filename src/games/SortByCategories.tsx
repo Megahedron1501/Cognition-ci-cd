@@ -13,7 +13,7 @@ import { isIndependentCorrect, percentIndependent, targetsMeetingCriterion } fro
 import {
   createId, deleteProgram, getProgram, getSessions, markTargetMastered, saveProgram, saveSession,
 } from '../utils/sessionStore';
-import { Category, Difficulty, Program, Trial } from '../types/session';
+import { Category, Difficulty, Program, ResponseType, Trial } from '../types/session';
 import { buildTargetBag, shuffle } from '../utils/targetRotation';
 import ProgramSettings from './ProgramSettings';
 
@@ -102,7 +102,18 @@ function isTargetItem(item: GameItem, category: Category, target: string): boole
   }
 }
 
+// Expressive trials ask a question that doesn't give the answer away.
+const QUESTIONS: Partial<Record<Category, string>> = {
+  color: 'What color is this?',
+  shape: 'What shape is this?',
+  animal: 'What animal is this?',
+};
+
 // The instruction (SD), shown on screen and spoken aloud.
+function promptFor(category: Category, target: string, responseType: ResponseType): string {
+  return responseType === 'expressive' ? QUESTIONS[category] ?? 'What is this?' : instructionFor(category, target);
+}
+
 function instructionFor(category: Category, target: string): string {
   return category === 'color' || category === 'size' ? `Touch the ${target} one` : `Touch the ${target}`;
 }
@@ -168,6 +179,9 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
   const [currentCategory, setCurrentCategory] = useState<Category>('color');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [categoryMode, setCategoryMode] = useState<CategoryMode>('mixed');
+  const [responseMode, setResponseMode] = useState<ResponseType>('receptive');
+  const responseModeRef = useRef(responseMode);
+  responseModeRef.current = responseMode;
   const [target, setTarget] = useState('');
 
   // The client's program for this category, if one is set up. It decides the
@@ -245,7 +259,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
   const sayInstruction = (category: Category, targetWord: string) => {
     if (!instructionSpokenRef.current || !isSoundEnabled()) return;
     spokenThisTrialRef.current = true;
-    speak(instructionFor(category, targetWord));
+    speak(promptFor(category, targetWord, responseModeRef.current));
   };
 
   const toggleInstructionSpoken = () => {
@@ -287,7 +301,10 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
     setTarget(newTarget);
 
     let selectedItems: GameItem[];
-    if (newCategory === 'size') {
+    if (responseMode === 'expressive') {
+      // Naming shows just the one picture to name.
+      selectedItems = itemDatabase.filter(item => isTargetItem(item, newCategory, newTarget)).slice(0, 1);
+    } else if (newCategory === 'size') {
       selectedItems = buildSizeItems(difficulty, newTarget);
     } else {
       const filteredItems = itemDatabase.filter(item => item.category === newCategory);
@@ -319,15 +336,15 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
     sayInstruction(newCategory, newTarget);
     // drawTarget and sayInstruction only touch refs, so they're safe to leave out of the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, difficulty, categoryMode, program]); // itemDatabase is outside, so not needed here
+  }, [round, difficulty, categoryMode, program, responseMode]); // itemDatabase is outside, so not needed here
 
-  // Handle item click - FIXED setRound with functional update
-  const handleItemClick = (item: GameItem) => {
+  // One response, whether the learner touched an item (receptive) or the
+  // clinician scored what they said (expressive). Both go through the same
+  // first-response scoring and error correction.
+  const recordResponse = (isTarget: boolean, response: string) => {
     // Ignore extra clicks once the correct item is found (e.g. a double-click),
     // so they can't log phantom attempts or advance the round twice.
     if (roundResolvedRef.current) return;
-
-    const isTarget = targetItems.some(t => t.id === item.id);
 
     if (!trialRecordedRef.current) {
       trialRecordedRef.current = true;
@@ -335,7 +352,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
         round,
         category: currentCategory,
         target,
-        itemClicked: item.name,
+        itemClicked: response,
         correct: isTarget,
         promptLevel,
         difficulty,
@@ -346,6 +363,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
         fieldSize: items.length,
         instructionSpoken: spokenThisTrialRef.current,
         programId: program?.id,
+        responseType: responseMode,
       }]);
     } else {
       setTrials(prev => prev.map((t, i) =>
@@ -369,7 +387,8 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
       }, 1000);
     } else {
       playSound('incorrect');
-      setMessage('Try again! Look for the ' + target);
+      // Naming the answer here would be a prompt the data doesn't record.
+      setMessage(responseMode === 'expressive' ? 'Try again!' : 'Try again! Look for the ' + target);
 
       const originalItems = [...items];
       setItems([]);
@@ -379,6 +398,15 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
         sayInstruction(currentCategory, target);
       }, 500);
     }
+  };
+
+  const handleItemClick = (item: GameItem) => {
+    recordResponse(targetItems.some(t => t.id === item.id), item.name);
+  };
+
+  // The app can't hear the learner, so the clinician scores what they said.
+  const handleExpressiveScore = (correct: boolean) => {
+    recordResponse(correct, correct ? 'Named correctly' : 'Incorrect or no response');
   };
 
   // Sound effects
@@ -444,6 +472,11 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
     resetGame();
   };
 
+  const changeResponseMode = (newMode: ResponseType) => {
+    setResponseMode(newMode);
+    resetGame();
+  };
+
   const endSessionEarly = () => {
     clearPendingTimer();
     roundResolvedRef.current = true;
@@ -477,10 +510,10 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
 
   // Load the program for this client and category.
   useEffect(() => {
-    const loaded = clientId && categoryMode !== 'mixed' ? getProgram(clientId, categoryMode) : null;
+    const loaded = clientId && categoryMode !== 'mixed' ? getProgram(clientId, categoryMode, responseMode) : null;
     setProgram(loaded);
     if (loaded) setDifficulty(loaded.difficulty);
-  }, [clientId, categoryMode]);
+  }, [clientId, categoryMode, responseMode]);
 
   // Save a finished session and check mastery. Running on clientId too means a
   // session finished with no client selected saves as soon as one is picked.
@@ -654,10 +687,11 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
 
       {showSettings && (
         <ProgramSettings
-          key={`${clientId}-${categoryMode}-${program?.id}`}
+          key={`${clientId}-${categoryMode}-${responseMode}-${program?.id}`}
           clientId={clientId}
           clientCode={clientCode}
           category={categoryMode === 'mixed' ? null : categoryMode}
+          responseType={responseMode}
           allTargets={categoryMode === 'mixed' ? [] : TARGETS[categoryMode]}
           program={program}
           currentDifficulty={difficulty}
@@ -668,13 +702,30 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
 
       {program && (
         <div className="program-badge">
-          📋 Program for <strong>{clientCode}</strong>:{' '}
+          📋 {responseMode === 'expressive' ? 'Naming' : 'Touching'} program for <strong>{clientCode}</strong>:{' '}
           {program.targets.filter(t => t.status !== 'onHold').map(t => t.word).join(', ')}
           {' '}· {program.trialsPerSession} trials · mastery at {program.criterion.percent}% across {program.criterion.sessions} sessions
         </div>
       )}
 
       <div className="difficulty-selector">
+        <h3>Response:</h3>
+        <div className="difficulty-buttons">
+          <button
+            className={`difficulty-btn ${responseMode === 'receptive' ? 'active' : ''}`}
+            onClick={() => changeResponseMode('receptive')}
+          >
+            👆 TOUCH IT
+          </button>
+          <button
+            className={`difficulty-btn ${responseMode === 'expressive' ? 'active' : ''}`}
+            onClick={() => changeResponseMode('expressive')}
+            disabled={categoryMode === 'size'}
+            title={categoryMode === 'size' ? 'Sizes need two or more pictures to compare, so they can only be touched' : undefined}
+          >
+            🗣️ NAME IT
+          </button>
+        </div>
         <h3>Sort by:</h3>
         <div className="difficulty-buttons">
           {CATEGORY_MODES.map(({ mode, label }) => (
@@ -682,6 +733,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
               key={mode}
               className={`difficulty-btn ${categoryMode === mode ? 'active' : ''}`}
               onClick={() => changeCategoryMode(mode)}
+              disabled={mode === 'size' && responseMode === 'expressive'}
             >
               {label}
             </button>
@@ -694,13 +746,14 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
               key={level}
               className={`difficulty-btn ${difficulty === level ? 'active' : ''}`}
               onClick={() => changeDifficulty(level)}
-              disabled={!!program}
+              disabled={!!program || responseMode === 'expressive'}
             >
               {level.toUpperCase()}
             </button>
           ))}
         </div>
         <div className="difficulty-info">
+          {responseMode === 'expressive' ? 'Naming shows one picture at a time.' : (<>
           {program && 'Set by the program. '}
           {categoryMode === 'size' ? (
             <>
@@ -715,6 +768,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
               {difficulty === 'hard' && 'Up to 8 choices'}
             </>
           )}
+          </>)}
         </div>
       </div>
 
@@ -813,7 +867,7 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
       ) : (
         <>
           <div className="game-prompt">
-            <h3>{instructionFor(currentCategory, target)}</h3>
+            <h3>{promptFor(currentCategory, target, responseMode)}</h3>
             {instructionSpoken && (
               <button
                 className="say-again-btn"
@@ -822,9 +876,12 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
                 🔊 Say it again
               </button>
             )}
-            <div className="category-badge">
-              Looking for: <strong>{target.toUpperCase()}</strong>
-            </div>
+            {/* Showing the answer on screen would prompt a reader when naming. */}
+            {responseMode === 'receptive' && (
+              <div className="category-badge">
+                Looking for: <strong>{target.toUpperCase()}</strong>
+              </div>
+            )}
           </div>
 
           {message && (
@@ -833,20 +890,29 @@ const SortByCategories: React.FC<SortByCategoriesProps> = ({ clientId = null, cl
             </div>
           )}
 
-          <div className={`items-grid ${currentCategory === 'size' ? (items.length === 2 ? 'easy' : 'medium') : difficulty}`}>
+          <div className={`items-grid ${responseMode === 'expressive' ? 'single' : currentCategory === 'size' ? (items.length === 2 ? 'easy' : 'medium') : difficulty}`}>
             {items.map((item) => (
               <div
                 key={item.id}
                 className="item-container"
-                onClick={() => handleItemClick(item)}
+                onClick={() => responseMode === 'receptive' && handleItemClick(item)}
               >
                 {renderItem(item)}
               </div>
             ))}
           </div>
 
+          {responseMode === 'expressive' && items.length > 0 && (
+            <div className="expressive-scoring">
+              <button className="score-correct" onClick={() => handleExpressiveScore(true)}>✅ Correct</button>
+              <button className="score-incorrect" onClick={() => handleExpressiveScore(false)}>❌ Incorrect / no response</button>
+            </div>
+          )}
+
           <div className="instructions">
-            <p>Click on the item that matches the category and target.</p>
+            {responseMode === 'receptive'
+              ? <p>Click on the item that matches the category and target.</p>
+              : <p>Let the learner say the answer out loud, then tap Correct or Incorrect. If you gave a prompt, set it in Prompt Level first.</p>}
             {categoryMode === 'mixed' && <p>Categories rotate each round: Color → Shape → Animal</p>}
             {trials.length > 0 && (
               <button className="end-early-btn" onClick={endSessionEarly}>⏹️ End session early</button>

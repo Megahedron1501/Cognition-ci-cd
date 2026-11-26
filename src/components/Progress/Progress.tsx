@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Progress.css';
 import ProgressGraph, { GraphPhaseLine, GraphPoint } from './ProgressGraph';
-import { Category, PhaseEvent, Program, SavedSession, Trial } from '../../types/session';
+import { Category, PhaseEvent, Program, ResponseType, SavedSession, Trial, responseTypeOf } from '../../types/session';
 import {
   deleteClient, deleteSession, exportBackup, getPrograms, getSessions, importBackup, markTargetMastered,
 } from '../../utils/sessionStore';
@@ -27,11 +27,18 @@ const CATEGORY_LABELS: Record<Category, string> = {
   size: 'Sizes',
 };
 
+const SKILL_LABELS: Record<ResponseType, string> = {
+  receptive: 'Touch it (receptive)',
+  expressive: 'Name it (expressive)',
+};
+
 const formatWhen = (time: number) => `${localDate(new Date(time))} ${localTime(new Date(time)).slice(0, 5)}`;
 
 const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged }) => {
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
+  // Touching and naming are different skills, so the graph always shows one at a time.
+  const [skillFilter, setSkillFilter] = useState<ResponseType>('receptive');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [targetFilter, setTargetFilter] = useState('all');
   const [notice, setNotice] = useState('');
@@ -46,17 +53,29 @@ const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged
   // its trials as it unmounts, and that has to happen before this reads them.
   useEffect(() => {
     reload();
+    setSkillFilter('receptive');
     setCategoryFilter('all');
     setTargetFilter('all');
     setNotice('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
+  useEffect(() => {
+    const has = (r: ResponseType) => sessions.some(s => s.trials.some(t => responseTypeOf(t) === r));
+    if (!has(skillFilter) && has(skillFilter === 'receptive' ? 'expressive' : 'receptive')) {
+      setSkillFilter(skillFilter === 'receptive' ? 'expressive' : 'receptive');
+    }
+  }, [sessions, skillFilter]);
+
   const matches = (t: Trial) =>
-    (categoryFilter === 'all' || t.category === categoryFilter)
+    responseTypeOf(t) === skillFilter
+    && (categoryFilter === 'all' || t.category === categoryFilter)
     && (targetFilter === 'all' || t.target === targetFilter);
 
-  const allTrials = sessions.flatMap(s => s.trials);
+  const everyTrial = sessions.flatMap(s => s.trials);
+  const skills = (Object.keys(SKILL_LABELS) as ResponseType[]).filter(r => everyTrial.some(t => responseTypeOf(t) === r));
+  const allTrials = everyTrial.filter(t => responseTypeOf(t) === skillFilter);
+  const skillPrograms = programs.filter(p => responseTypeOf(p) === skillFilter);
   const categories = (Object.keys(CATEGORY_LABELS) as Category[]).filter(c => allTrials.some(t => t.category === c));
   const targetOptions = categoryFilter === 'all'
     ? []
@@ -76,11 +95,11 @@ const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged
     date: formatWhen(row.session.startedAt),
   }));
 
-  const filteredProgram = categoryFilter === 'all' ? undefined : programs.find(p => p.category === categoryFilter);
+  const filteredProgram = categoryFilter === 'all' ? undefined : skillPrograms.find(p => p.category === categoryFilter);
 
   // Phase lines for the programs in view, grouped when several changes fell
   // between the same two sessions.
-  const events: PhaseEvent[] = programs
+  const events: PhaseEvent[] = skillPrograms
     .filter(p => categoryFilter === 'all' || p.category === categoryFilter)
     .flatMap(p => p.events)
     .filter(e => targetFilter === 'all' || !e.target || e.target === targetFilter)
@@ -167,6 +186,17 @@ const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged
         <>
           <div className="progress-filters">
             <label>
+              Skill:{' '}
+              <select
+                value={skillFilter}
+                onChange={e => { setSkillFilter(e.target.value as ResponseType); setCategoryFilter('all'); setTargetFilter('all'); }}
+              >
+                {(skills.length > 0 ? skills : ['receptive' as ResponseType]).map(r => (
+                  <option key={r} value={r}>{SKILL_LABELS[r]}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               Category:{' '}
               <select
                 value={categoryFilter}
@@ -187,8 +217,11 @@ const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged
             )}
           </div>
 
+          {allTrials.length === 0 && (
+            <p className="progress-empty">No {SKILL_LABELS[skillFilter]} sessions yet. Pick another skill above.</p>
+          )}
           <h3 className="progress-graph-title">
-            Independent correct: {categoryFilter === 'all' ? 'all categories' : CATEGORY_LABELS[categoryFilter]}
+            {skillFilter === 'expressive' ? 'Naming' : 'Touching'}, independent correct: {categoryFilter === 'all' ? 'all categories' : CATEGORY_LABELS[categoryFilter]}
             {targetFilter !== 'all' && `, ${targetFilter}`}
           </h3>
           <ProgressGraph points={points} phaseLines={phaseLines} criterionPercent={filteredProgram?.criterion.percent} />
@@ -210,7 +243,7 @@ const Progress: React.FC<ProgressProps> = ({ clientId, clientCode, onDataChanged
             return (
               <div key={program.id} className="program-summary">
                 <h4>
-                  {CATEGORY_LABELS[program.category]}: mastery at {program.criterion.percent}% across {program.criterion.sessions} sessions ({program.difficulty})
+                  {CATEGORY_LABELS[program.category]}, {responseTypeOf(program) === 'expressive' ? 'naming' : 'touching'}: mastery at {program.criterion.percent}% across {program.criterion.sessions} sessions{responseTypeOf(program) === 'expressive' ? '' : ` (${program.difficulty})`}
                 </h4>
                 <table className="progress-table">
                   <thead><tr><th>Target</th><th>Status</th><th>Sessions in a row</th><th /></tr></thead>

@@ -63,6 +63,8 @@ Component locations:
 
 **Persistence is device-only**: `src/utils/sessionStore.ts` keeps clients, sessions, and programs in `localStorage` (types in `src/types/session.ts`); there are no API calls and no backend. `App.tsx` holds the selected client (`ClientPicker`) and passes it down; it's deliberately not remembered across reloads, so data can't land under the wrong client. Only `SortByCategories` saves sessions today — it has per-client programs (`ProgramSettings`, in its `⚙️ Settings` panel), and `Progress` shows the graphs. `BehaviorTracker` and the other tools don't save. Real cloud storage of client data would need accounts, encryption, and HIPAA compliance first, and can't run on the resetting AWS sandbox.
 
+**Receptive vs. expressive are separate skills**: `SortByCategories` has a Touch it (receptive) / Name it (expressive) switch. In Name it the app can't hear the learner, so the clinician scores each answer. Trials and programs carry a `responseType` (absent on older data, which means receptive — read it with `responseTypeOf`), programs are keyed by client + category + response type, and Progress graphs one skill at a time. Never mix the two in one program, graph, or mastery check.
+
 **Scoring rules live in one place**: `src/utils/mastery.ts` defines independent correct (correct first response, no prompt, no text labels) and the mastery check. Use it rather than re-deriving them. Mastery is only ever flagged; moving a target to maintenance is the clinician's decision.
 
 **Client names/PII**: clients are identified by a short code, never a name. `TokenBoard` takes a `clientName` prop; treat any real client-identifying data as sensitive — the running app currently passes a placeholder (`"REDACTED"`) from `App.tsx` rather than a real name.
