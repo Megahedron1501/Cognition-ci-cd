@@ -6,6 +6,7 @@ import ShapeSorterGame from './games/ShapeSorterGame';
 import EmotionMatcherGame from './games/EmotionMatcherGame';
 import VisualScheduleBuilder from './components/VisualSchedule/VisualScheduleBuilder';
 import SortByCategories from './games/SortByCategories';
+import MemoryMatch from './games/MemoryMatch';
 import LaunchScreen from './components/LaunchScreen/LaunchScreen';
 import ChoiceBoard from './components/ChoiceBoard/ChoiceBoard';
 import BehaviorTracker from './components/BehaviorTracker/BehaviorTracker';
@@ -18,7 +19,7 @@ import { isSoundEnabled, setSoundEnabled } from './utils/sound';
 
 function App() {
   const [hasLaunched, setHasLaunched] = useState(false);
-  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer' | 'progress'>('tokenBoard');
+  const [currentView, setCurrentView] = useState<'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer' | 'progress' | 'memoryMatch'>('tokenBoard');
   const [clients, setClients] = useState<Client[]>(() => getClients());
   const [activeClientId, setActiveClientId] = useState<string | null>(null);
   const activeClient = clients.find(c => c.id === activeClientId) ?? null;
@@ -110,6 +111,15 @@ function App() {
         </button>
         <button
           className="app-nav-btn"
+          onClick={() => setCurrentView('memoryMatch')}
+          style={{
+            backgroundColor: currentView === 'memoryMatch' ? '#4CAF50' : '#6c757d'
+          }}
+        >
+          🃏 Memory Match
+        </button>
+        <button
+          className="app-nav-btn"
           onClick={() => setCurrentView('choiceBoard')}
           style={{
             backgroundColor: currentView === 'choiceBoard' ? '#4CAF50' : '#6c757d'
@@ -157,6 +167,7 @@ function App() {
         {currentView === 'shapeGame' && <ShapeSorterGame />}
         {currentView === 'emotionGame' && <EmotionMatcherGame />}
         {currentView === 'scheduleBuilder' && <VisualScheduleBuilder />}
+        {currentView === 'memoryMatch' && <MemoryMatch />}
         {currentView === 'sortByCategories' && (
           <SortByCategories clientId={activeClientId} clientCode={activeClient?.code ?? null} />
         )}

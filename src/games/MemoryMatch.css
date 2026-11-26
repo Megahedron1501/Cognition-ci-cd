@@ -1,0 +1,164 @@
+.memory-match {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.memory-match h2 {
+  margin-top: 0;
+  color: #2C3E50;
+}
+
+.memory-match .memory-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: #2C3E50;
+}
+
+.memory-match .memory-label {
+  font-weight: bold;
+}
+
+.memory-match .memory-pairs-btn {
+  min-width: 44px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: #6c757d;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.memory-match .memory-pairs-btn.active {
+  background: #2196f3;
+}
+
+.memory-match .memory-tries {
+  margin-left: 10px;
+  font-size: 1.05rem;
+}
+
+/* Cards: a back with a "?" that flips over to show the picture. */
+.memory-match .memory-grid {
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.memory-match .memory-card {
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  perspective: 600px;
+  cursor: pointer;
+  touch-action: manipulation; /* no double-tap zoom when tapping quickly */
+}
+
+.memory-match .memory-card-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease;
+}
+
+.memory-match .memory-card.face-up .memory-card-inner {
+  transform: rotateY(180deg);
+}
+
+.memory-match .memory-card-back,
+.memory-match .memory-card-front {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  backface-visibility: hidden;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.memory-match .memory-card-back {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #42A5F5, #7E57C2);
+}
+
+.memory-match .memory-card-front {
+  font-size: 2.8rem;
+  background: #FFFDE7;
+  border: 3px solid #FFE082;
+  transform: rotateY(180deg);
+}
+
+.memory-match .memory-card.matched .memory-card-front {
+  background: #E8F5E9;
+  border-color: #81C784;
+}
+
+.memory-match .memory-win {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #1B5E20;
+  background: #E8F5E9;
+  border-radius: 12px;
+}
+
+.memory-match .memory-again-btn,
+.memory-match .memory-restart-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: #27AE60;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.memory-match .memory-restart-btn {
+  margin-top: 18px;
+  color: #2C3E50;
+  background: #ECF0F1;
+  border: 2px solid #BDC3C7;
+}
+
+@media (max-width: 600px) {
+  .memory-match {
+    padding: 12px;
+  }
+
+  .memory-match .memory-grid {
+    gap: 8px;
+  }
+
+  .memory-match .memory-card-front {
+    font-size: 2.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-match .memory-card-inner {
+    transition: none;
+  }
+}

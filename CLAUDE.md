@@ -51,13 +51,13 @@ When the Phase 0 persistence work (see long-term vision above) eventually needs 
 
 ## Architecture
 
-**Single-page, state-driven view switch, no router.** `src/App.tsx` holds one `currentView` union-type state value (`'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer' | 'progress'`) and conditionally renders one top-level component per view. Switching views unmounts the previous tool and loses its state — the exceptions are `BehaviorTracker` and `FunTimer`, which stay mounted and are only hidden with `display: none`, because behavior data and a running timer have to continue while the other tools are in use. Nav buttons in `App.tsx` just call `setCurrentView(...)`. There's also a `hasLaunched` boolean gate in front of everything that shows `LaunchScreen` until the user clicks through.
+**Single-page, state-driven view switch, no router.** `src/App.tsx` holds one `currentView` union-type state value (`'tokenBoard' | 'shapeGame' | 'emotionGame' | 'scheduleBuilder' | 'sortByCategories' | 'choiceBoard' | 'behaviorTracker' | 'funTimer' | 'progress' | 'memoryMatch'`) and conditionally renders one top-level component per view. Switching views unmounts the previous tool and loses its state — the exceptions are `BehaviorTracker` and `FunTimer`, which stay mounted and are only hidden with `display: none`, because behavior data and a running timer have to continue while the other tools are in use. Nav buttons in `App.tsx` just call `setCurrentView(...)`. There's also a `hasLaunched` boolean gate in front of everything that shows `LaunchScreen` until the user clicks through.
 
 **Each tool is a self-contained component,** paired with its own co-located `.css` file, and holds its own local state via `useState` — there is no shared/global state (no Context, no Redux/Zustand). Cross-tool communication happens only through props/callbacks passed down from `App.tsx` (e.g. `TokenBoard`'s `onAllTokensEarned` callback drives `App.tsx` to switch `currentView` to `'choiceBoard'` once all tokens are earned — this is the one place today where completing one tool auto-navigates to another).
 
 Component locations:
 - `src/components/LaunchScreen/`, `src/components/ChoiceBoard/`, `src/components/TokenBoard/`, `src/components/VisualSchedule/` — non-game tools
-- `src/games/` — `ShapeSorterGame`, `EmotionMatcherGame`, `SortByCategories` (flat files, not one-per-folder like `components/`)
+- `src/games/` — `ShapeSorterGame`, `EmotionMatcherGame`, `SortByCategories`, `MemoryMatch` (flat files, not one-per-folder like `components/`). `MemoryMatch` is intentionally simple for now (no data or clinical settings) until the BCBA decides what it should target.
 
 **Sound playback** is done ad hoc with `new Audio('/sounds/coin.mp3')` inline at the call site (see `TokenBoard.tsx`), not through a shared audio utility — if adding sound elsewhere, either follow this pattern or factor out a shared helper, but don't assume one currently exists.
 
